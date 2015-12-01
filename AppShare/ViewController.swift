@@ -21,7 +21,7 @@ class ViewController: UIViewController {
             //
             println(apps.count)
 
-        }, withSuccess: { ([AnyObject]!) -> Void in
+        }, withSuccess: { (_: [AnyObject]!) -> Void in
             // List of Apps
 
         }, withFailure: {(error: NSError!) -> Void in
