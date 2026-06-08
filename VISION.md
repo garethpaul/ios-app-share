@@ -43,3 +43,6 @@ future design explicitly explains user consent, storage, and data flow.
 - Background app inventory collection
 - Broad Swift migration mixed with detection behavior changes
 - Real signing material or private device data
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
