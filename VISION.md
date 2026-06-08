@@ -1,5 +1,8 @@
 ## iOS App Share Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 iOS App Share is a Swift sample that uses `iHasApp` to detect installed apps and
 inspect app dictionaries.
 
