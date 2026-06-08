@@ -34,6 +34,11 @@ Contribution rules:
 
 ## Security And Privacy
 
+Canonical security policy and reporting:
+
+- [`SECURITY.md`](SECURITY.md)
+
+
 Installed-app lists are sensitive. The sample should remain local-only unless a
 future design explicitly explains user consent, storage, and data flow.
 
