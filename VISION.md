@@ -37,7 +37,7 @@ Contribution rules:
 Installed-app lists are sensitive. The sample should remain local-only unless a
 future design explicitly explains user consent, storage, and data flow.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Uploading or logging detected installed-app lists
 - Background app inventory collection
