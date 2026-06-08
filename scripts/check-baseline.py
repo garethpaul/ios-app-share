@@ -8,7 +8,8 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PLAN = ROOT / "docs/plans/2026-06-08-ios-app-detection-baseline.md"
+BASELINE_PLAN = ROOT / "docs/plans/2026-06-08-ios-app-detection-baseline.md"
+EXPLICIT_DETECTION_PLAN = ROOT / "docs/plans/2026-06-08-explicit-detection.md"
 
 
 def require(condition, message, failures):
@@ -22,6 +23,27 @@ def read(relative_path):
 
 def strip_swift_line_comments(text):
     return "\n".join(line.split("//", 1)[0] for line in text.splitlines())
+
+
+def swift_function_body(text, signature):
+    start = text.find(signature)
+    if start == -1:
+        return ""
+
+    body_start = text.find("{", start)
+    if body_start == -1:
+        return ""
+
+    depth = 0
+    for index in range(body_start, len(text)):
+        character = text[index]
+        if character == "{":
+            depth += 1
+        elif character == "}":
+            depth -= 1
+            if depth == 0:
+                return text[body_start + 1:index]
+    return ""
 
 
 def parse_xml(relative_path, failures):
@@ -60,6 +82,7 @@ def main():
         "AppShareTests/AppShareTests.swift",
         "AppShareTests/Info.plist",
         "docs/plans/2026-06-08-ios-app-detection-baseline.md",
+        "docs/plans/2026-06-08-explicit-detection.md",
         "docs/readme-overview.svg",
     ]
 
@@ -89,7 +112,10 @@ def main():
     security = read("SECURITY.md")
     changes = read("CHANGES.md")
     gitignore = read(".gitignore")
-    plan = PLAN.read_text(encoding="utf-8") if PLAN.exists() else ""
+    baseline_plan = BASELINE_PLAN.read_text(encoding="utf-8") if BASELINE_PLAN.exists() else ""
+    explicit_detection_plan = EXPLICIT_DETECTION_PLAN.read_text(encoding="utf-8") if EXPLICIT_DETECTION_PLAN.exists() else ""
+    view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
+    detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
 
     require("pod 'iHasApp'" in podfile,
             "Podfile must preserve the iHasApp dependency",
@@ -113,8 +139,26 @@ def main():
     require('#import "iHasApp.h"' in bridge,
             "Bridge header must expose iHasApp to Swift",
             failures)
-    require("detectAppDictionariesWithIncremental" in active_view_controller,
-            "ViewController must retain the app-detection sample flow",
+    require("detectAppDictionariesWithIncremental" in detection_action and
+            active_view_controller.count("detectAppDictionariesWithIncremental") == 1,
+            "ViewController must keep detection behind the explicit action only",
+            failures)
+    require("self.configureDetectButton()" in view_did_load and "detectAppDictionariesWithIncremental" not in view_did_load,
+            "ViewController must not start installed-app detection from viewDidLoad",
+            failures)
+    require("private let detectButton" in active_view_controller and
+            'addTarget(self, action: "detectInstalledApps:", forControlEvents: UIControlEvents.TouchUpInside)' in active_view_controller,
+            "ViewController must expose an explicit user action for detection",
+            failures)
+    require("private var detectionInProgress = false" in active_view_controller and
+            "private var detectionCompleted = false" in active_view_controller and
+            "self.detectionInProgress || self.detectionCompleted" in detection_action,
+            "ViewController must guard duplicate detection runs",
+            failures)
+    require("self.detectButton.enabled = false" in detection_action and
+            "self.detectButton.enabled = true" in detection_action and
+            "self.detectionCompleted = true" in detection_action,
+            "ViewController must disable detection while running and re-enable it on failure",
             failures)
     require(not re.search(r"\b(?:print|println|NSLog)\s*\(", active_view_controller),
             "Detection callback must not log installed-app data or counts",
@@ -134,8 +178,8 @@ def main():
     require("make check" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
-    require("local-only" in readme.lower() and "installed-app" in readme.lower(),
-            "README must document local-only installed-app detection",
+    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower(),
+            "README must document local-only, user-triggered installed-app detection",
             failures)
     require("scripts/check-baseline.py" in vision and "local-only" in vision.lower(),
             "VISION must describe the current static privacy baseline",
@@ -143,11 +187,11 @@ def main():
     require("installed-app" in security.lower() and "make check" in security,
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
-    require("debug logging" in changes and "make check" in changes,
-            "CHANGES must record the logging cleanup and baseline",
+    require("debug logging" in changes and "make check" in changes and "user-triggered" in changes,
+            "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
-    require("status: completed" in plan,
-            "plan must be marked completed",
+    require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan,
+            "plans must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

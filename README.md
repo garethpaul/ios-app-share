@@ -52,7 +52,7 @@ Run `pod install` only from a compatible CocoaPods environment when you intentio
 ## Running or Using the Project
 
 - Open `AppShare.xcworkspace` in Xcode so the app and CocoaPods projects are loaded together.
-- Use the sample locally to inspect `iHasApp` detection behavior.
+- Tap the detection button in the sample app to inspect `iHasApp` behavior locally.
 - Do not upload, persist, or log detected installed-app data without a dedicated privacy design and user consent.
 
 ## Testing and Verification
@@ -63,7 +63,7 @@ Run the local static baseline:
 make check
 ```
 
-The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against logging or network/upload handling for installed-app detection results.
+The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, logging, or network/upload handling for installed-app detection results.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -77,7 +77,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include AppShare/Info.plist, AppShareTests/Info.plist.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include AppShare/Info.plist, AppShareTests/Info.plist.
-- Installed-app detection is sensitive device metadata. Keep the sample local-only, avoid debug logging of detection results or counts, and document any future data flow before adding storage or transmission.
+- Installed-app detection is sensitive device metadata. Keep the sample local-only and user-triggered, avoid debug logging of detection results or counts, and document any future data flow before adding storage or transmission.
 
 ## Maintenance Notes
 

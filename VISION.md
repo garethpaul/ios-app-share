@@ -19,6 +19,7 @@ Priority:
 - Preserve the app-detection example flow
 - Keep CocoaPods setup and `iHasApp` dependency context visible
 - Avoid collecting or uploading installed-app data
+- Keep installed-app detection user-triggered rather than automatic on launch
 - Keep security policy aligned with app-detection behavior
 - Keep `scripts/check-baseline.py` passing for local-only detection, plist
   metadata, CocoaPods lockfiles, Xcode metadata, and source inventory
@@ -48,6 +49,8 @@ future design explicitly explains user consent, storage, and data flow.
 Current baseline: `make check` runs `scripts/check-baseline.py` without Xcode.
 It verifies the CocoaPods/iHasApp metadata, app plist and workspace XML,
 installed-app logging guardrails, and local-only detection expectations.
+It also verifies that detection remains behind an explicit user action and is
+not started from `viewDidLoad`.
 
 ## What We Will Not Merge (For Now)
 
