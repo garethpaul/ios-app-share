@@ -20,10 +20,11 @@ Priority:
 - Keep CocoaPods setup and `iHasApp` dependency context visible
 - Avoid collecting or uploading installed-app data
 - Keep security policy aligned with app-detection behavior
+- Keep `scripts/check-baseline.py` passing for local-only detection, plist
+  metadata, CocoaPods lockfiles, Xcode metadata, and source inventory
 
 Next priorities:
 
-- Add README setup, privacy, and verification instructions
 - Document iOS version limitations around installed-app detection
 - Modernize Swift and dependency usage in a dedicated pass
 - Add tests or manual checks around success and failure callbacks
@@ -43,6 +44,10 @@ Canonical security policy and reporting:
 
 Installed-app lists are sensitive. The sample should remain local-only unless a
 future design explicitly explains user consent, storage, and data flow.
+
+Current baseline: `make check` runs `scripts/check-baseline.py` without Xcode.
+It verifies the CocoaPods/iHasApp metadata, app plist and workspace XML,
+installed-app logging guardrails, and local-only detection expectations.
 
 ## What We Will Not Merge (For Now)
 

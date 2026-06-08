@@ -18,9 +18,7 @@ class ViewController: UIViewController {
             // done
         //}
         detect.detectAppDictionariesWithIncremental({ (apps: [AnyObject]!) -> Void in
-            //
-            println(apps.count)
-
+            // Detected app data stays local to this sample.
         }, withSuccess: { (_: [AnyObject]!) -> Void in
             // List of Apps
 
@@ -37,4 +35,3 @@ class ViewController: UIViewController {
 
 
 }
-

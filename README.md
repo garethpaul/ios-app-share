@@ -11,19 +11,23 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 
 ## Repository Contents
 
+- `CHANGES.md` - concise history of maintenance changes
+- `Makefile` - local verification entry point
 - `Podfile` - Apple platform dependency metadata
 - `AppShare` - source or example code
 - `AppShare.xcodeproj` - Xcode project file
+- `AppShare.xcworkspace` - Xcode workspace including the CocoaPods project
 - `AppShareTests` - source or example code
 - `Podfile.lock` - Apple platform dependency metadata
 - `SECURITY.md` - security reporting and disclosure guidance
+- `scripts/check-baseline.py` - static iOS app-detection verifier
 - `VISION.md` - project direction and maintenance guardrails
 
 Additional scan context:
 
 - Source directories: AppShare, AppShareTests
 - Dependency and build manifests: Podfile, Podfile.lock
-- Entry points or build surfaces: AppShare.xcodeproj
+- Entry points or build surfaces: `make check`, AppShare.xcworkspace, AppShare.xcodeproj
 - Test-looking files: AppShareTests/AppShareTests.swift, AppShareTests/Info.plist
 
 ## Getting Started
@@ -32,25 +36,36 @@ Additional scan context:
 
 - Git
 - macOS with Xcode for building Apple platform projects
-- CocoaPods if dependencies need to be installed
+- CocoaPods 0.36.1 era tooling if dependencies need to be installed or regenerated
+- Python 3 for local static verification on non-macOS hosts
 
 ### Setup
 
 ```bash
 git clone https://github.com/garethpaul/ios-app-share.git
 cd ios-app-share
-pod install
+make check
 ```
 
-The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
+Run `pod install` only from a compatible CocoaPods environment when you intentionally need to regenerate the workspace support files.
 
 ## Running or Using the Project
 
-- Open `AppShare.xcodeproj` in Xcode, choose the app or sample scheme, and run it on the matching simulator/device.
+- Open `AppShare.xcworkspace` in Xcode so the app and CocoaPods projects are loaded together.
+- Use the sample locally to inspect `iHasApp` detection behavior.
+- Do not upload, persist, or log detected installed-app data without a dedicated privacy design and user consent.
 
 ## Testing and Verification
 
-- Xcode's test action or `xcodebuild test` with the appropriate scheme and destination
+Run the local static baseline:
+
+```bash
+make check
+```
+
+The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against logging or network/upload handling for installed-app detection results.
+
+For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -62,12 +77,14 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include AppShare/Info.plist, AppShareTests/Info.plist.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include AppShare/Info.plist, AppShareTests/Info.plist.
+- Installed-app detection is sensitive device metadata. Keep the sample local-only, avoid debug logging of detection results or counts, and document any future data flow before adding storage or transmission.
 
 ## Maintenance Notes
 
 - This looks like an Apple platform project or sample. Xcode, Swift, CocoaPods, and deployment target versions may need to match the original project era.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
+- Run `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
 ## Contributing
 
