@@ -12,6 +12,8 @@
   completed, and retry states.
 - Added accessibility text that describes the local-only installed-app
   detection action.
+- Guarded detector lifetime by retaining the asynchronous `iHasApp` scan until
+  success or failure callbacks finish.
 
 ## 2026-06-08
 

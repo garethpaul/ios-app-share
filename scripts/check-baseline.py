@@ -16,6 +16,7 @@ PROGRESS_PLAN = ROOT / "docs/plans/2026-06-09-detection-progress-state.md"
 COMPLETED_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-completed-state.md"
 ACCESSIBILITY_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-affordance.md"
 ACCESSIBILITY_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-state.md"
+DETECTOR_LIFETIME_PLAN = ROOT / "docs/plans/2026-06-09-detector-lifetime-guard.md"
 
 
 def require(condition, message, failures):
@@ -95,6 +96,7 @@ def main():
         "docs/plans/2026-06-09-detection-completed-state.md",
         "docs/plans/2026-06-09-detection-accessibility-affordance.md",
         "docs/plans/2026-06-09-detection-accessibility-state.md",
+        "docs/plans/2026-06-09-detector-lifetime-guard.md",
         "docs/readme-overview.svg",
     ]
 
@@ -133,6 +135,7 @@ def main():
     completed_state_plan = COMPLETED_STATE_PLAN.read_text(encoding="utf-8") if COMPLETED_STATE_PLAN.exists() else ""
     accessibility_plan = ACCESSIBILITY_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_PLAN.exists() else ""
     accessibility_state_plan = ACCESSIBILITY_STATE_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_STATE_PLAN.exists() else ""
+    detector_lifetime_plan = DETECTOR_LIFETIME_PLAN.read_text(encoding="utf-8") if DETECTOR_LIFETIME_PLAN.exists() else ""
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
 
@@ -190,6 +193,11 @@ def main():
             "self.detectionInProgress || self.detectionCompleted" in detection_action,
             "ViewController must guard duplicate detection runs",
             failures)
+    require("private var appDetector: iHasApp?" in active_view_controller and
+            "self.appDetector = detect" in detection_action and
+            detection_action.count("self.appDetector = nil") >= 2,
+            "ViewController must retain the app detector during asynchronous detection and release it after callbacks",
+            failures)
     require("self.detectButton.enabled = false" in detection_action and
             "self.detectButton.enabled = true" in detection_action and
             "self.detectionCompleted = true" in detection_action,
@@ -225,16 +233,16 @@ def main():
     require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
-    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower(),
+    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "detector lifetime" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
-    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower(),
+    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "detector lifetime" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
     require("installed-app" in security.lower() and "make check" in security and "completed state" in security.lower() and "state-specific accessibility" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
-    require("debug logging" in changes and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower(),
+    require("debug logging" in changes and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "detector lifetime" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
@@ -254,6 +262,9 @@ def main():
             failures)
     require("status: completed" in accessibility_state_plan,
             "detection accessibility state plan must be marked completed",
+            failures)
+    require("status: completed" in detector_lifetime_plan,
+            "detector lifetime plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):
