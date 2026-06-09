@@ -63,7 +63,7 @@ Run the local static baseline:
 make check
 ```
 
-The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, logging, or network/upload handling for installed-app detection results.
+The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, callback UI updates that skip the main queue, logging, or network/upload handling for installed-app detection results.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -84,6 +84,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - This looks like an Apple platform project or sample. Xcode, Swift, CocoaPods, and deployment target versions may need to match the original project era.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
+- See `docs/plans/2026-06-08-callback-ui-main-queue.md` for the detection callback UI threading guardrail.
 - Run `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
 ## Contributing

@@ -54,13 +54,17 @@ class ViewController: UIViewController {
         detect.detectAppDictionariesWithIncremental({ (_: [AnyObject]!) -> Void in
             // Detected app data stays local to this sample.
         }, withSuccess: { (_: [AnyObject]!) -> Void in
-            self.detectionInProgress = false
-            self.detectionCompleted = true
-            self.detectButton.setTitle("Detection Complete", forState: UIControlState.Disabled)
+            dispatch_async(dispatch_get_main_queue()) {
+                self.detectionInProgress = false
+                self.detectionCompleted = true
+                self.detectButton.setTitle("Detection Complete", forState: UIControlState.Disabled)
+            }
         }, withFailure: {(_: NSError!) -> Void in
-            self.detectionInProgress = false
-            self.detectButton.enabled = true
-            self.detectButton.setTitle("Try Again", forState: UIControlState.Normal)
+            dispatch_async(dispatch_get_main_queue()) {
+                self.detectionInProgress = false
+                self.detectButton.enabled = true
+                self.detectButton.setTitle("Try Again", forState: UIControlState.Normal)
+            }
         })
 
     }

@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE_PLAN = ROOT / "docs/plans/2026-06-08-ios-app-detection-baseline.md"
 EXPLICIT_DETECTION_PLAN = ROOT / "docs/plans/2026-06-08-explicit-detection.md"
+CALLBACK_UI_PLAN = ROOT / "docs/plans/2026-06-08-callback-ui-main-queue.md"
 
 
 def require(condition, message, failures):
@@ -83,6 +84,7 @@ def main():
         "AppShareTests/Info.plist",
         "docs/plans/2026-06-08-ios-app-detection-baseline.md",
         "docs/plans/2026-06-08-explicit-detection.md",
+        "docs/plans/2026-06-08-callback-ui-main-queue.md",
         "docs/readme-overview.svg",
     ]
 
@@ -114,6 +116,7 @@ def main():
     gitignore = read(".gitignore")
     baseline_plan = BASELINE_PLAN.read_text(encoding="utf-8") if BASELINE_PLAN.exists() else ""
     explicit_detection_plan = EXPLICIT_DETECTION_PLAN.read_text(encoding="utf-8") if EXPLICIT_DETECTION_PLAN.exists() else ""
+    callback_ui_plan = CALLBACK_UI_PLAN.read_text(encoding="utf-8") if CALLBACK_UI_PLAN.exists() else ""
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
 
@@ -160,6 +163,9 @@ def main():
             "self.detectionCompleted = true" in detection_action,
             "ViewController must disable detection while running and re-enable it on failure",
             failures)
+    require(detection_action.count("dispatch_async(dispatch_get_main_queue())") >= 2,
+            "ViewController must update detection button state on the main queue from callbacks",
+            failures)
     require(not re.search(r"\b(?:print|println|NSLog)\s*\(", active_view_controller),
             "Detection callback must not log installed-app data or counts",
             failures)
@@ -178,19 +184,19 @@ def main():
     require("make check" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
-    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower(),
+    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
-    require("scripts/check-baseline.py" in vision and "local-only" in vision.lower(),
+    require("scripts/check-baseline.py" in vision and "local-only" in vision.lower() and "main queue" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
     require("installed-app" in security.lower() and "make check" in security,
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
-    require("debug logging" in changes and "make check" in changes and "user-triggered" in changes,
+    require("debug logging" in changes and "make check" in changes and "user-triggered" in changes and "main queue" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
-    require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan,
+    require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
             "plans must be marked completed",
             failures)
 
