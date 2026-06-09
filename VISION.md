@@ -24,6 +24,8 @@ Priority:
 - Keep `scripts/check-baseline.py` passing for local-only detection, plist
   metadata, CocoaPods lockfiles, Xcode metadata, callback UI threading, and
   accessibility/source inventory
+- Keep `make lint`, `make test`, `make build`, and `make check` available as
+  local verification gates
 
 Next priorities:
 
@@ -47,15 +49,15 @@ Canonical security policy and reporting:
 Installed-app lists are sensitive. The sample should remain local-only unless a
 future design explicitly explains user consent, storage, and data flow.
 
-Current baseline: `make check` runs `scripts/check-baseline.py` without Xcode.
-It verifies the CocoaPods/iHasApp metadata, app plist and workspace XML,
-installed-app logging guardrails, and local-only detection expectations.
-It also verifies that detection remains behind an explicit user action and is
-not started from `viewDidLoad`, that the disabled button shows in-progress
-state while detection is running, and that callback-driven button state changes
-return to the main queue. The completed state keeps the detection button
-disabled after success. Accessibility text should describe the local-only
-detection action with state-specific accessibility labels and hints.
+Current baseline: `make lint`, `make test`, `make build`, and `make check` run
+`scripts/check-baseline.py` without Xcode. It verifies the CocoaPods/iHasApp
+metadata, app plist and workspace XML, installed-app logging guardrails, and
+local-only detection expectations. It also verifies that detection remains
+behind an explicit user action and is not started from `viewDidLoad`, that the
+disabled button shows in-progress state while detection is running, and that
+callback-driven button state changes return to the main queue. The completed state
+keeps the detection button disabled after success. State-specific accessibility
+text should describe the local-only detection action with labels and hints.
 
 ## What We Will Not Merge (For Now)
 

@@ -44,6 +44,9 @@ Additional scan context:
 ```bash
 git clone https://github.com/garethpaul/ios-app-share.git
 cd ios-app-share
+make lint
+make test
+make build
 make check
 ```
 
@@ -60,8 +63,15 @@ Run `pod install` only from a compatible CocoaPods environment when you intentio
 Run the local static baseline:
 
 ```bash
+make lint
+make test
+make build
 make check
 ```
+
+The `lint`, `test`, and `build` targets intentionally alias the static baseline
+on hosts without the legacy Xcode toolchain, so the standard local gate commands
+stay available while preserving the single source of truth.
 
 The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, missing in-progress detection UI state, missing completed state button disabling, missing accessibility text for the local-only detection action, callback UI updates that skip the main queue, logging, or network/upload handling for local-only installed-app detection results.
 It also checks state-specific accessibility text for the running, completed,
@@ -94,7 +104,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-09-detection-accessibility-affordance.md` for the detection accessibility guardrail.
 - See `docs/plans/2026-06-09-detection-accessibility-state.md` for
   state-specific accessibility text on the detection button.
-- Run `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
+- See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.
+- Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
 ## Contributing
 

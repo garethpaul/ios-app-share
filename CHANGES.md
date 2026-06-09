@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Added local `make lint`, `make test`, and `make build` gate aliases for the
+  static app-detection baseline.
 - Added an explicit disabled `Detecting...` title while installed-app detection
   is running so the user-triggered action has visible in-progress state.
 - Kept the detection button disabled in the completed state so a finished scan
