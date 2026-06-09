@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-09
+
+- Added an explicit disabled `Detecting...` title while installed-app detection
+  is running so the user-triggered action has visible in-progress state.
+
 ## 2026-06-08
 
 - Removed installed-app count debug logging from the detection callback.

@@ -51,7 +51,8 @@ Current baseline: `make check` runs `scripts/check-baseline.py` without Xcode.
 It verifies the CocoaPods/iHasApp metadata, app plist and workspace XML,
 installed-app logging guardrails, and local-only detection expectations.
 It also verifies that detection remains behind an explicit user action and is
-not started from `viewDidLoad`, and that callback-driven button state changes
+not started from `viewDidLoad`, that the disabled button shows in-progress
+state while detection is running, and that callback-driven button state changes
 return to the main queue.
 
 ## What We Will Not Merge (For Now)

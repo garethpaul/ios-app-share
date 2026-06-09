@@ -50,6 +50,7 @@ class ViewController: UIViewController {
 
         self.detectionInProgress = true
         self.detectButton.enabled = false
+        self.detectButton.setTitle("Detecting...", forState: UIControlState.Disabled)
         let detect = iHasApp.new()
         detect.detectAppDictionariesWithIncremental({ (_: [AnyObject]!) -> Void in
             // Detected app data stays local to this sample.
