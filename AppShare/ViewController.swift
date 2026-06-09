@@ -21,6 +21,8 @@ class ViewController: UIViewController {
 
     private func configureDetectButton() {
         self.detectButton.setTitle("Detect Installed Apps", forState: UIControlState.Normal)
+        self.detectButton.accessibilityLabel = "Detect Installed Apps"
+        self.detectButton.accessibilityHint = "Runs local installed-app detection without sending results"
         self.detectButton.addTarget(self, action: "detectInstalledApps:", forControlEvents: UIControlEvents.TouchUpInside)
         self.detectButton.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(self.detectButton)
