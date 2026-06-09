@@ -14,6 +14,7 @@ CALLBACK_UI_PLAN = ROOT / "docs/plans/2026-06-08-callback-ui-main-queue.md"
 PROGRESS_PLAN = ROOT / "docs/plans/2026-06-09-detection-progress-state.md"
 COMPLETED_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-completed-state.md"
 ACCESSIBILITY_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-affordance.md"
+ACCESSIBILITY_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-state.md"
 
 
 def require(condition, message, failures):
@@ -91,6 +92,7 @@ def main():
         "docs/plans/2026-06-09-detection-progress-state.md",
         "docs/plans/2026-06-09-detection-completed-state.md",
         "docs/plans/2026-06-09-detection-accessibility-affordance.md",
+        "docs/plans/2026-06-09-detection-accessibility-state.md",
         "docs/readme-overview.svg",
     ]
 
@@ -126,6 +128,7 @@ def main():
     progress_plan = PROGRESS_PLAN.read_text(encoding="utf-8") if PROGRESS_PLAN.exists() else ""
     completed_state_plan = COMPLETED_STATE_PLAN.read_text(encoding="utf-8") if COMPLETED_STATE_PLAN.exists() else ""
     accessibility_plan = ACCESSIBILITY_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_PLAN.exists() else ""
+    accessibility_state_plan = ACCESSIBILITY_STATE_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_STATE_PLAN.exists() else ""
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
 
@@ -167,6 +170,17 @@ def main():
             "without sending results" in active_view_controller,
             "ViewController must describe the local-only detection action for accessibility",
             failures)
+    for accessibility_text in [
+        "Detecting Installed Apps",
+        "Detection is running locally without sending results",
+        "Installed App Detection Complete",
+        "Detection completed locally and the button is disabled",
+        "Try App Detection Again",
+        "Previous local detection failed; double tap to retry",
+    ]:
+        require(accessibility_text in detection_action,
+                f"ViewController must keep state-specific accessibility text: {accessibility_text}",
+                failures)
     require("private var detectionInProgress = false" in active_view_controller and
             "private var detectionCompleted = false" in active_view_controller and
             "self.detectionInProgress || self.detectionCompleted" in detection_action,
@@ -204,16 +218,16 @@ def main():
     require("make check" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
-    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "accessibility" in readme.lower(),
+    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
-    require("scripts/check-baseline.py" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "accessibility" in vision.lower(),
+    require("scripts/check-baseline.py" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
-    require("installed-app" in security.lower() and "make check" in security and "completed state" in security.lower() and "accessibility" in security.lower(),
+    require("installed-app" in security.lower() and "make check" in security and "completed state" in security.lower() and "state-specific accessibility" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
-    require("debug logging" in changes and "make check" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "accessibility" in changes.lower(),
+    require("debug logging" in changes and "make check" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
@@ -227,6 +241,9 @@ def main():
             failures)
     require("status: completed" in accessibility_plan,
             "detection accessibility affordance plan must be marked completed",
+            failures)
+    require("status: completed" in accessibility_state_plan,
+            "detection accessibility state plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

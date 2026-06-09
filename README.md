@@ -64,6 +64,8 @@ make check
 ```
 
 The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, missing in-progress detection UI state, missing completed state button disabling, missing accessibility text for the local-only detection action, callback UI updates that skip the main queue, logging, or network/upload handling for local-only installed-app detection results.
+It also checks state-specific accessibility text for the running, completed,
+and retry states of the installed-app detection button.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -90,6 +92,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-09-detection-progress-state.md` for the installed-app detection in-progress UI guardrail.
 - See `docs/plans/2026-06-09-detection-completed-state.md` for the installed-app detection completed state guardrail.
 - See `docs/plans/2026-06-09-detection-accessibility-affordance.md` for the detection accessibility guardrail.
+- See `docs/plans/2026-06-09-detection-accessibility-state.md` for
+  state-specific accessibility text on the detection button.
 - Run `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
 ## Contributing

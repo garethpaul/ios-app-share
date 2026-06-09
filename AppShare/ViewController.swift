@@ -53,6 +53,8 @@ class ViewController: UIViewController {
         self.detectionInProgress = true
         self.detectButton.enabled = false
         self.detectButton.setTitle("Detecting...", forState: UIControlState.Disabled)
+        self.detectButton.accessibilityLabel = "Detecting Installed Apps"
+        self.detectButton.accessibilityHint = "Detection is running locally without sending results"
         let detect = iHasApp.new()
         detect.detectAppDictionariesWithIncremental({ (_: [AnyObject]!) -> Void in
             // Detected app data stays local to this sample.
@@ -62,12 +64,16 @@ class ViewController: UIViewController {
                 self.detectionCompleted = true
                 self.detectButton.enabled = false
                 self.detectButton.setTitle("Detection Complete", forState: UIControlState.Disabled)
+                self.detectButton.accessibilityLabel = "Installed App Detection Complete"
+                self.detectButton.accessibilityHint = "Detection completed locally and the button is disabled"
             }
         }, withFailure: {(_: NSError!) -> Void in
             dispatch_async(dispatch_get_main_queue()) {
                 self.detectionInProgress = false
                 self.detectButton.enabled = true
                 self.detectButton.setTitle("Try Again", forState: UIControlState.Normal)
+                self.detectButton.accessibilityLabel = "Try App Detection Again"
+                self.detectButton.accessibilityHint = "Previous local detection failed; double tap to retry"
             }
         })
 
