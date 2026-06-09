@@ -58,6 +58,7 @@ class ViewController: UIViewController {
             dispatch_async(dispatch_get_main_queue()) {
                 self.detectionInProgress = false
                 self.detectionCompleted = true
+                self.detectButton.enabled = false
                 self.detectButton.setTitle("Detection Complete", forState: UIControlState.Disabled)
             }
         }, withFailure: {(_: NSError!) -> Void in

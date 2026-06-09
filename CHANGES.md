@@ -4,6 +4,8 @@
 
 - Added an explicit disabled `Detecting...` title while installed-app detection
   is running so the user-triggered action has visible in-progress state.
+- Kept the detection button disabled in the completed state so a finished scan
+  cannot look retryable after callback ordering changes.
 
 ## 2026-06-08
 

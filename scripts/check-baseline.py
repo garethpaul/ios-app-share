@@ -12,6 +12,7 @@ BASELINE_PLAN = ROOT / "docs/plans/2026-06-08-ios-app-detection-baseline.md"
 EXPLICIT_DETECTION_PLAN = ROOT / "docs/plans/2026-06-08-explicit-detection.md"
 CALLBACK_UI_PLAN = ROOT / "docs/plans/2026-06-08-callback-ui-main-queue.md"
 PROGRESS_PLAN = ROOT / "docs/plans/2026-06-09-detection-progress-state.md"
+COMPLETED_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-completed-state.md"
 
 
 def require(condition, message, failures):
@@ -87,6 +88,7 @@ def main():
         "docs/plans/2026-06-08-explicit-detection.md",
         "docs/plans/2026-06-08-callback-ui-main-queue.md",
         "docs/plans/2026-06-09-detection-progress-state.md",
+        "docs/plans/2026-06-09-detection-completed-state.md",
         "docs/readme-overview.svg",
     ]
 
@@ -120,6 +122,7 @@ def main():
     explicit_detection_plan = EXPLICIT_DETECTION_PLAN.read_text(encoding="utf-8") if EXPLICIT_DETECTION_PLAN.exists() else ""
     callback_ui_plan = CALLBACK_UI_PLAN.read_text(encoding="utf-8") if CALLBACK_UI_PLAN.exists() else ""
     progress_plan = PROGRESS_PLAN.read_text(encoding="utf-8") if PROGRESS_PLAN.exists() else ""
+    completed_state_plan = COMPLETED_STATE_PLAN.read_text(encoding="utf-8") if COMPLETED_STATE_PLAN.exists() else ""
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
 
@@ -166,6 +169,9 @@ def main():
             "self.detectionCompleted = true" in detection_action,
             "ViewController must disable detection while running and re-enable it on failure",
             failures)
+    require(detection_action.count("self.detectButton.enabled = false") >= 2,
+            "ViewController must keep the detection button disabled after completed success",
+            failures)
     require('self.detectButton.setTitle("Detecting...", forState: UIControlState.Disabled)' in detection_action,
             "ViewController must show an in-progress title while detection is running",
             failures)
@@ -190,16 +196,16 @@ def main():
     require("make check" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
-    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower(),
+    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
-    require("scripts/check-baseline.py" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower(),
+    require("scripts/check-baseline.py" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
-    require("installed-app" in security.lower() and "make check" in security,
+    require("installed-app" in security.lower() and "make check" in security and "completed state" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
-    require("debug logging" in changes and "make check" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes,
+    require("debug logging" in changes and "make check" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
@@ -207,6 +213,9 @@ def main():
             failures)
     require("status: completed" in progress_plan,
             "detection progress state plan must be marked completed",
+            failures)
+    require("status: completed" in completed_state_plan,
+            "detection completed state plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

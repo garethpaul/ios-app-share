@@ -53,7 +53,8 @@ installed-app logging guardrails, and local-only detection expectations.
 It also verifies that detection remains behind an explicit user action and is
 not started from `viewDidLoad`, that the disabled button shows in-progress
 state while detection is running, and that callback-driven button state changes
-return to the main queue.
+return to the main queue. The completed state keeps the detection button
+disabled after success.
 
 ## What We Will Not Merge (For Now)
 
