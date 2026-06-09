@@ -63,7 +63,7 @@ Run the local static baseline:
 make check
 ```
 
-The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, missing in-progress detection UI state, missing completed state button disabling, callback UI updates that skip the main queue, logging, or network/upload handling for local-only installed-app detection results.
+The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, missing in-progress detection UI state, missing completed state button disabling, missing accessibility text for the local-only detection action, callback UI updates that skip the main queue, logging, or network/upload handling for local-only installed-app detection results.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -78,6 +78,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include AppShare/Info.plist, AppShareTests/Info.plist.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include AppShare/Info.plist, AppShareTests/Info.plist.
 - Installed-app detection is sensitive device metadata. Keep the sample local-only and user-triggered, avoid debug logging of detection results or counts, and document any future data flow before adding storage or transmission.
+- Keep the detection button accessibility text aligned with the local-only
+  privacy boundary.
 
 ## Maintenance Notes
 
@@ -87,6 +89,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-08-callback-ui-main-queue.md` for the detection callback UI threading guardrail.
 - See `docs/plans/2026-06-09-detection-progress-state.md` for the installed-app detection in-progress UI guardrail.
 - See `docs/plans/2026-06-09-detection-completed-state.md` for the installed-app detection completed state guardrail.
+- See `docs/plans/2026-06-09-detection-accessibility-affordance.md` for the detection accessibility guardrail.
 - Run `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
 ## Contributing

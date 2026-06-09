@@ -29,7 +29,7 @@ Helpful reports include:
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Dependency manifests detected: Podfile, Podfile.lock. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
 - Installed-app detection can reveal sensitive device behavior. The sample should stay local-only and user-triggered; do not log, persist, upload, or otherwise transmit detected installed-app data or counts without explicit consent, retention, and data-flow documentation.
-- `make check` runs a static baseline that guards plist/storyboard metadata, CocoaPods lockfiles, Xcode project wiring, source inventory, automatic detection, duplicate scans, completed state UI, and installed-app logging/network regressions when Xcode is unavailable.
+- `make check` runs a static baseline that guards plist/storyboard metadata, CocoaPods lockfiles, Xcode project wiring, source inventory, automatic detection, duplicate scans, completed state UI, accessibility text for the local-only detection action, and installed-app logging/network regressions when Xcode is unavailable.
 
 ## Mobile Privacy Notes
 

@@ -6,6 +6,8 @@
   is running so the user-triggered action has visible in-progress state.
 - Kept the detection button disabled in the completed state so a finished scan
   cannot look retryable after callback ordering changes.
+- Added accessibility text that describes the local-only installed-app
+  detection action.
 
 ## 2026-06-08
 

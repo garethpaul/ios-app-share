@@ -23,7 +23,7 @@ Priority:
 - Keep security policy aligned with app-detection behavior
 - Keep `scripts/check-baseline.py` passing for local-only detection, plist
   metadata, CocoaPods lockfiles, Xcode metadata, callback UI threading, and
-  source inventory
+  accessibility/source inventory
 
 Next priorities:
 
@@ -54,7 +54,8 @@ It also verifies that detection remains behind an explicit user action and is
 not started from `viewDidLoad`, that the disabled button shows in-progress
 state while detection is running, and that callback-driven button state changes
 return to the main queue. The completed state keeps the detection button
-disabled after success.
+disabled after success. Accessibility text should describe the local-only
+detection action.
 
 ## What We Will Not Merge (For Now)
 
