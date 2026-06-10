@@ -62,6 +62,8 @@ text should describe the local-only detection action with labels and hints.
 Accessibility announcements should describe user-triggered state changes for
 running, completed, and retry states.
 Detector lifetime should remain explicit while asynchronous scans are running.
+Terminal detector and main-queue callbacks should avoid a controller retain cycle
+while preserving main-queue UI updates.
 
 ## What We Will Not Merge (For Now)
 

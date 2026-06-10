@@ -34,6 +34,8 @@ Helpful reports include:
   detection, duplicate scans, completed state UI, state-specific accessibility
   text and accessibility announcements for the local-only detection action, and
   installed-app logging/network regressions when Xcode is unavailable.
+- Terminal detector and main-queue callbacks use weak controller capture so a
+  stalled dependency cannot leave the view controller in a retain cycle.
 
 ## Mobile Privacy Notes
 

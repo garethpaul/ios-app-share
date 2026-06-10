@@ -80,6 +80,9 @@ Accessibility announcements are posted for those user-triggered state changes
 so assistive technologies hear detection progress and completion.
 Detector lifetime is guarded so the asynchronous `iHasApp` scan remains
 retained until success or failure callbacks finish.
+Terminal detector and main-queue callbacks capture the controller weakly so the
+explicit detector lifetime does not create a retain cycle if the dependency
+never completes.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -114,6 +117,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   detection state accessibility announcements.
 - See `docs/plans/2026-06-09-detector-lifetime-guard.md` for the asynchronous
   detector lifetime guardrail.
+- See `docs/plans/2026-06-10-detector-callback-retain-cycle.md` for the detector
+  callback ownership guardrail.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
