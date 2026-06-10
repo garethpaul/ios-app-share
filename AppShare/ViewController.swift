@@ -22,8 +22,10 @@ class ViewController: UIViewController {
 
     private func configureDetectButton() {
         self.detectButton.setTitle("Detect Installed Apps", forState: UIControlState.Normal)
-        self.detectButton.accessibilityLabel = "Detect Installed Apps"
-        self.detectButton.accessibilityHint = "Runs local installed-app detection without sending results"
+        self.updateDetectButtonAccessibility(
+            "Detect Installed Apps",
+            hint: "Runs local installed-app detection without sending results",
+            announce: false)
         self.detectButton.addTarget(self, action: "detectInstalledApps:", forControlEvents: UIControlEvents.TouchUpInside)
         self.detectButton.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(self.detectButton)
@@ -46,6 +48,15 @@ class ViewController: UIViewController {
             constant: 0.0))
     }
 
+    private func updateDetectButtonAccessibility(label: String, hint: String, announce: Bool) {
+        self.detectButton.accessibilityLabel = label
+        self.detectButton.accessibilityHint = hint
+
+        if announce {
+            UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, label)
+        }
+    }
+
     @IBAction func detectInstalledApps(sender: AnyObject) {
         if self.detectionInProgress || self.detectionCompleted {
             return
@@ -54,8 +65,10 @@ class ViewController: UIViewController {
         self.detectionInProgress = true
         self.detectButton.enabled = false
         self.detectButton.setTitle("Detecting...", forState: UIControlState.Disabled)
-        self.detectButton.accessibilityLabel = "Detecting Installed Apps"
-        self.detectButton.accessibilityHint = "Detection is running locally without sending results"
+        self.updateDetectButtonAccessibility(
+            "Detecting Installed Apps",
+            hint: "Detection is running locally without sending results",
+            announce: true)
         let detect = iHasApp.new()
         self.appDetector = detect
         detect.detectAppDictionariesWithIncremental({ (_: [AnyObject]!) -> Void in
@@ -67,8 +80,10 @@ class ViewController: UIViewController {
                 self.detectionCompleted = true
                 self.detectButton.enabled = false
                 self.detectButton.setTitle("Detection Complete", forState: UIControlState.Disabled)
-                self.detectButton.accessibilityLabel = "Installed App Detection Complete"
-                self.detectButton.accessibilityHint = "Detection completed locally and the button is disabled"
+                self.updateDetectButtonAccessibility(
+                    "Installed App Detection Complete",
+                    hint: "Detection completed locally and the button is disabled",
+                    announce: true)
             }
         }, withFailure: {(_: NSError!) -> Void in
             dispatch_async(dispatch_get_main_queue()) {
@@ -76,8 +91,10 @@ class ViewController: UIViewController {
                 self.detectionInProgress = false
                 self.detectButton.enabled = true
                 self.detectButton.setTitle("Try Again", forState: UIControlState.Normal)
-                self.detectButton.accessibilityLabel = "Try App Detection Again"
-                self.detectButton.accessibilityHint = "Previous local detection failed; double tap to retry"
+                self.updateDetectButtonAccessibility(
+                    "Try App Detection Again",
+                    hint: "Previous local detection failed; double tap to retry",
+                    announce: true)
             }
         })
 

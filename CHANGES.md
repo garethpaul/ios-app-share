@@ -2,6 +2,7 @@
 
 ## 2026-06-09
 
+- Added accessibility announcements for user-triggered detection state changes.
 - Added local `make lint`, `make test`, and `make build` gate aliases for the
   static app-detection baseline.
 - Added an explicit disabled `Detecting...` title while installed-app detection

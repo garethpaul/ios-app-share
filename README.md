@@ -76,6 +76,8 @@ stay available while preserving the single source of truth.
 The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, missing in-progress detection UI state, missing completed state button disabling, missing accessibility text for the local-only detection action, callback UI updates that skip the main queue, logging, or network/upload handling for local-only installed-app detection results.
 It also checks state-specific accessibility text for the running, completed,
 and retry states of the installed-app detection button.
+Accessibility announcements are posted for those user-triggered state changes
+so assistive technologies hear detection progress and completion.
 Detector lifetime is guarded so the asynchronous `iHasApp` scan remains
 retained until success or failure callbacks finish.
 
@@ -94,6 +96,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Installed-app detection is sensitive device metadata. Keep the sample local-only and user-triggered, avoid debug logging of detection results or counts, and document any future data flow before adding storage or transmission.
 - Keep the detection button accessibility text aligned with the local-only
   privacy boundary.
+- Keep accessibility announcements aligned with user-triggered detection state
+  changes.
 
 ## Maintenance Notes
 
@@ -106,6 +110,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-09-detection-accessibility-affordance.md` for the detection accessibility guardrail.
 - See `docs/plans/2026-06-09-detection-accessibility-state.md` for
   state-specific accessibility text on the detection button.
+- See `docs/plans/2026-06-09-detection-accessibility-announcements.md` for
+  detection state accessibility announcements.
 - See `docs/plans/2026-06-09-detector-lifetime-guard.md` for the asynchronous
   detector lifetime guardrail.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.

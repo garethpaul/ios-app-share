@@ -17,6 +17,7 @@ COMPLETED_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-completed-state.m
 ACCESSIBILITY_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-affordance.md"
 ACCESSIBILITY_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-state.md"
 DETECTOR_LIFETIME_PLAN = ROOT / "docs/plans/2026-06-09-detector-lifetime-guard.md"
+ACCESSIBILITY_ANNOUNCEMENT_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-announcements.md"
 
 
 def require(condition, message, failures):
@@ -97,6 +98,7 @@ def main():
         "docs/plans/2026-06-09-detection-accessibility-affordance.md",
         "docs/plans/2026-06-09-detection-accessibility-state.md",
         "docs/plans/2026-06-09-detector-lifetime-guard.md",
+        "docs/plans/2026-06-09-detection-accessibility-announcements.md",
         "docs/readme-overview.svg",
     ]
 
@@ -136,6 +138,7 @@ def main():
     accessibility_plan = ACCESSIBILITY_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_PLAN.exists() else ""
     accessibility_state_plan = ACCESSIBILITY_STATE_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_STATE_PLAN.exists() else ""
     detector_lifetime_plan = DETECTOR_LIFETIME_PLAN.read_text(encoding="utf-8") if DETECTOR_LIFETIME_PLAN.exists() else ""
+    accessibility_announcement_plan = ACCESSIBILITY_ANNOUNCEMENT_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_ANNOUNCEMENT_PLAN.exists() else ""
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
 
@@ -172,10 +175,17 @@ def main():
             'addTarget(self, action: "detectInstalledApps:", forControlEvents: UIControlEvents.TouchUpInside)' in active_view_controller,
             "ViewController must expose an explicit user action for detection",
             failures)
-    require('detectButton.accessibilityLabel = "Detect Installed Apps"' in active_view_controller and
-            "detectButton.accessibilityHint" in active_view_controller and
+    require('self.updateDetectButtonAccessibility(\n            "Detect Installed Apps"' in active_view_controller and
+            "Runs local installed-app detection without sending results" in active_view_controller and
             "without sending results" in active_view_controller,
             "ViewController must describe the local-only detection action for accessibility",
+            failures)
+    require("private func updateDetectButtonAccessibility" in active_view_controller and
+            "UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, label)" in active_view_controller,
+            "ViewController must announce detection state changes to assistive technologies",
+            failures)
+    require(detection_action.count("announce: true") >= 3 and "announce: false" in active_view_controller,
+            "ViewController must announce running, completed, and retry detection states only after user-triggered changes",
             failures)
     for accessibility_text in [
         "Detecting Installed Apps",
@@ -233,16 +243,16 @@ def main():
     require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
-    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "detector lifetime" in readme.lower(),
+    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "accessibility announcements" in readme.lower() and "detector lifetime" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
-    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "detector lifetime" in vision.lower(),
+    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "accessibility announcements" in vision.lower() and "detector lifetime" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
-    require("installed-app" in security.lower() and "make check" in security and "completed state" in security.lower() and "state-specific accessibility" in security.lower(),
+    require("installed-app" in security.lower() and "make check" in security and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
-    require("debug logging" in changes and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "detector lifetime" in changes.lower(),
+    require("debug logging" in changes and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "accessibility announcements" in changes.lower() and "detector lifetime" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
@@ -265,6 +275,9 @@ def main():
             failures)
     require("status: completed" in detector_lifetime_plan,
             "detector lifetime plan must be marked completed",
+            failures)
+    require("status: completed" in accessibility_announcement_plan,
+            "detection accessibility announcements plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

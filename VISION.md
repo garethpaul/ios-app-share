@@ -23,7 +23,8 @@ Priority:
 - Keep security policy aligned with app-detection behavior
 - Keep `scripts/check-baseline.py` passing for local-only detection, plist
   metadata, CocoaPods lockfiles, Xcode metadata, callback UI threading, and
-  detector lifetime, accessibility/source inventory
+  detector lifetime, accessibility announcements, and accessibility/source
+  inventory
 - Keep `make lint`, `make test`, `make build`, and `make check` available as
   local verification gates
 
@@ -58,6 +59,8 @@ disabled button shows in-progress state while detection is running, and that
 callback-driven button state changes return to the main queue. The completed state
 keeps the detection button disabled after success. State-specific accessibility
 text should describe the local-only detection action with labels and hints.
+Accessibility announcements should describe user-triggered state changes for
+running, completed, and retry states.
 Detector lifetime should remain explicit while asynchronous scans are running.
 
 ## What We Will Not Merge (For Now)
