@@ -3,6 +3,7 @@ from pathlib import Path
 import plistlib
 import re
 import shutil
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -19,6 +20,7 @@ ACCESSIBILITY_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility
 DETECTOR_LIFETIME_PLAN = ROOT / "docs/plans/2026-06-09-detector-lifetime-guard.md"
 ACCESSIBILITY_ANNOUNCEMENT_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-announcements.md"
 CALLBACK_RETAIN_CYCLE_PLAN = ROOT / "docs/plans/2026-06-10-detector-callback-retain-cycle.md"
+HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
 
 
 def require(condition, message, failures):
@@ -75,6 +77,7 @@ def main():
     failures = []
     required_files = [
         ".gitignore",
+        ".github/workflows/check.yml",
         "CHANGES.md",
         "Makefile",
         "Podfile",
@@ -101,6 +104,7 @@ def main():
         "docs/plans/2026-06-09-detector-lifetime-guard.md",
         "docs/plans/2026-06-09-detection-accessibility-announcements.md",
         "docs/plans/2026-06-10-detector-callback-retain-cycle.md",
+        "docs/plans/2026-06-10-hosted-project-validation.md",
         "docs/readme-overview.svg",
     ]
 
@@ -142,6 +146,8 @@ def main():
     detector_lifetime_plan = DETECTOR_LIFETIME_PLAN.read_text(encoding="utf-8") if DETECTOR_LIFETIME_PLAN.exists() else ""
     accessibility_announcement_plan = ACCESSIBILITY_ANNOUNCEMENT_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_ANNOUNCEMENT_PLAN.exists() else ""
     callback_retain_cycle_plan = CALLBACK_RETAIN_CYCLE_PLAN.read_text(encoding="utf-8") if CALLBACK_RETAIN_CYCLE_PLAN.exists() else ""
+    hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
+    workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
 
@@ -289,9 +295,28 @@ def main():
     require("status: completed" in callback_retain_cycle_plan,
             "detector callback retain-cycle plan must be marked completed",
             failures)
+    require("status: completed" in hosted_validation_plan and "make check" in hosted_validation_plan,
+            "hosted project validation plan must be completed and document make check",
+            failures)
+    require("permissions:\n  contents: read" in workflow and
+            "cancel-in-progress: true" in workflow and
+            "runs-on: macos-15" in workflow and
+            "timeout-minutes: 10" in workflow and
+            "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" in workflow and
+            "run: make check" in workflow,
+            "GitHub Actions must keep the bounded, least-privilege macOS project check",
+            failures)
 
     if shutil.which("xcodebuild"):
-        print("xcodebuild is available; run a scheme-specific Xcode test on macOS before release.")
+        result = subprocess.run(
+            ["xcodebuild", "-list", "-project", "AppShare.xcodeproj"],
+            cwd=str(ROOT),
+            stdout=subprocess.DEVNULL,
+            check=False,
+        )
+        require(result.returncode == 0,
+                "AppShare.xcodeproj must parse with installed Xcode",
+                failures)
     else:
         print("xcodebuild unavailable; static iOS baseline only.")
 

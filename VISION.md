@@ -27,6 +27,7 @@ Priority:
   inventory
 - Keep `make lint`, `make test`, `make build`, and `make check` available as
   local verification gates
+- Keep pinned macOS CI parsing `AppShare.xcodeproj` through the canonical gate
 
 Next priorities:
 
