@@ -27,6 +27,7 @@ Priority:
   inventory
 - Keep `make lint`, `make test`, `make build`, and `make check` available as
   local verification gates
+- Keep GitHub Actions aligned with the SDK-free `make check` baseline
 
 Next priorities:
 

@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-10
+
+- Added a GitHub Actions workflow that runs the SDK-free `make check` baseline
+  for the local-only app-detection sample.
+
 ## 2026-06-09
 
 - Added accessibility announcements for user-triggered detection state changes.

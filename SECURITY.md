@@ -34,6 +34,9 @@ Helpful reports include:
   detection, duplicate scans, completed state UI, state-specific accessibility
   text and accessibility announcements for the local-only detection action, and
   installed-app logging/network regressions when Xcode is unavailable.
+- GitHub Actions runs only the SDK-free `make check` baseline. Do not add live
+  device collection, deployment, or credentialed service steps to that workflow
+  without a separate privacy and security review.
 
 ## Mobile Privacy Notes
 

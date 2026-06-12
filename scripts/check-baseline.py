@@ -18,6 +18,8 @@ ACCESSIBILITY_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-affor
 ACCESSIBILITY_STATE_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-state.md"
 DETECTOR_LIFETIME_PLAN = ROOT / "docs/plans/2026-06-09-detector-lifetime-guard.md"
 ACCESSIBILITY_ANNOUNCEMENT_PLAN = ROOT / "docs/plans/2026-06-09-detection-accessibility-announcements.md"
+CI_WORKFLOW = ROOT / ".github/workflows/check.yml"
+CI_PLAN = ROOT / "docs/plans/2026-06-10-ci-baseline.md"
 
 
 def require(condition, message, failures):
@@ -73,6 +75,7 @@ def parse_plist(relative_path, failures):
 def main():
     failures = []
     required_files = [
+        ".github/workflows/check.yml",
         ".gitignore",
         "CHANGES.md",
         "Makefile",
@@ -99,6 +102,7 @@ def main():
         "docs/plans/2026-06-09-detection-accessibility-state.md",
         "docs/plans/2026-06-09-detector-lifetime-guard.md",
         "docs/plans/2026-06-09-detection-accessibility-announcements.md",
+        "docs/plans/2026-06-10-ci-baseline.md",
         "docs/readme-overview.svg",
     ]
 
@@ -139,6 +143,8 @@ def main():
     accessibility_state_plan = ACCESSIBILITY_STATE_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_STATE_PLAN.exists() else ""
     detector_lifetime_plan = DETECTOR_LIFETIME_PLAN.read_text(encoding="utf-8") if DETECTOR_LIFETIME_PLAN.exists() else ""
     accessibility_announcement_plan = ACCESSIBILITY_ANNOUNCEMENT_PLAN.read_text(encoding="utf-8") if ACCESSIBILITY_ANNOUNCEMENT_PLAN.exists() else ""
+    ci_workflow = CI_WORKFLOW.read_text(encoding="utf-8") if CI_WORKFLOW.exists() else ""
+    ci_plan = CI_PLAN.read_text(encoding="utf-8") if CI_PLAN.exists() else ""
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
 
@@ -240,19 +246,22 @@ def main():
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
-    require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
+    require("actions/setup-python@v5" in ci_workflow and 'python-version: "3.12"' in ci_workflow and "make check" in ci_workflow,
+            "GitHub Actions workflow must run the Python static make check baseline",
+            failures)
+    require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "GitHub Actions" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
     require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "accessibility announcements" in readme.lower() and "detector lifetime" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
-    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "accessibility announcements" in vision.lower() and "detector lifetime" in vision.lower(),
+    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "GitHub Actions" in vision and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "accessibility announcements" in vision.lower() and "detector lifetime" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
-    require("installed-app" in security.lower() and "make check" in security and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower(),
+    require("installed-app" in security.lower() and "make check" in security and "GitHub Actions" in security and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
-    require("debug logging" in changes and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "accessibility announcements" in changes.lower() and "detector lifetime" in changes.lower(),
+    require("debug logging" in changes and "GitHub Actions" in changes and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "accessibility announcements" in changes.lower() and "detector lifetime" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
@@ -278,6 +287,9 @@ def main():
             failures)
     require("status: completed" in accessibility_announcement_plan,
             "detection accessibility announcements plan must be marked completed",
+            failures)
+    require("status: completed" in ci_plan and "GitHub Actions" in ci_plan and "make check" in ci_plan,
+            "CI baseline plan must record hosted make check verification",
             failures)
 
     if shutil.which("xcodebuild"):
