@@ -7,6 +7,8 @@
 - Removed the detector callback retain cycle by capturing the view controller
   weakly in both terminal detector callbacks and main-queue UI updates.
 - Preserved explicit detector lifetime through successful and failed scans.
+- Guarded terminal scan state with a generation token so a stale callback from
+  an earlier retry or a duplicate terminal result cannot overwrite active work.
 
 ## 2026-06-09
 

@@ -22,6 +22,7 @@ ACCESSIBILITY_ANNOUNCEMENT_PLAN = ROOT / "docs/plans/2026-06-09-detection-access
 CALLBACK_RETAIN_CYCLE_PLAN = ROOT / "docs/plans/2026-06-10-detector-callback-retain-cycle.md"
 CI_BASELINE_PLAN = ROOT / "docs/plans/2026-06-10-ci-baseline.md"
 HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
+STALE_CALLBACK_PLAN = ROOT / "docs/plans/2026-06-12-stale-detector-callback-guard.md"
 
 
 def require(condition, message, failures):
@@ -108,6 +109,7 @@ def main():
         "docs/plans/2026-06-10-detector-callback-retain-cycle.md",
         "docs/plans/2026-06-10-ci-baseline.md",
         "docs/plans/2026-06-10-hosted-project-validation.md",
+        "docs/plans/2026-06-12-stale-detector-callback-guard.md",
         "docs/readme-overview.svg",
     ]
 
@@ -151,9 +153,11 @@ def main():
     callback_retain_cycle_plan = CALLBACK_RETAIN_CYCLE_PLAN.read_text(encoding="utf-8") if CALLBACK_RETAIN_CYCLE_PLAN.exists() else ""
     ci_baseline_plan = CI_BASELINE_PLAN.read_text(encoding="utf-8") if CI_BASELINE_PLAN.exists() else ""
     hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
+    stale_callback_plan = STALE_CALLBACK_PLAN.read_text(encoding="utf-8") if STALE_CALLBACK_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
+    terminal_state = swift_function_body(active_view_controller, "private func finishDetection")
 
     require("pod 'iHasApp'" in podfile,
             "Podfile must preserve the iHasApp dependency",
@@ -197,7 +201,7 @@ def main():
             "UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, label)" in active_view_controller,
             "ViewController must announce detection state changes to assistive technologies",
             failures)
-    require(detection_action.count("announce: true") >= 3 and "announce: false" in active_view_controller,
+    require(active_view_controller.count("announce: true") >= 3 and "announce: false" in active_view_controller,
             "ViewController must announce running, completed, and retry detection states only after user-triggered changes",
             failures)
     for accessibility_text in [
@@ -208,7 +212,7 @@ def main():
         "Try App Detection Again",
         "Previous local detection failed; double tap to retry",
     ]:
-        require(accessibility_text in detection_action,
+        require(accessibility_text in active_view_controller,
                 f"ViewController must keep state-specific accessibility text: {accessibility_text}",
                 failures)
     require("private var detectionInProgress = false" in active_view_controller and
@@ -218,15 +222,15 @@ def main():
             failures)
     require("private var appDetector: iHasApp?" in active_view_controller and
             "self.appDetector = detect" in detection_action and
-            detection_action.count("appDetector = nil") >= 2,
+            "self.appDetector = nil" in terminal_state,
             "ViewController must retain the app detector during asynchronous detection and release it after callbacks",
             failures)
-    require("detectButton.enabled = false" in detection_action and
-            "detectButton.enabled = true" in detection_action and
-            "detectionCompleted = true" in detection_action,
+    require("detectButton.enabled = false" in active_view_controller and
+            "detectButton.enabled = true" in terminal_state and
+            "detectionCompleted = true" in terminal_state,
             "ViewController must disable detection while running and re-enable it on failure",
             failures)
-    require(detection_action.count("detectButton.enabled = false") >= 2,
+    require(active_view_controller.count("detectButton.enabled = false") >= 2,
             "ViewController must keep the detection button disabled after completed success",
             failures)
     require('self.detectButton.setTitle("Detecting...", forState: UIControlState.Disabled)' in detection_action,
@@ -238,6 +242,17 @@ def main():
     require(detection_action.count("[weak self]") >= 4 and
             detection_action.count("if let strongSelf = self") >= 2,
             "Terminal detector and main-queue callbacks must not retain the view controller",
+            failures)
+    require("private var detectionGeneration = 0" in active_view_controller and
+            "self.detectionGeneration += 1" in detection_action and
+            "let detectionGeneration = self.detectionGeneration" in detection_action and
+            detection_action.count("finishDetection(detectionGeneration") == 2,
+            "Each scan must capture a generation for both terminal callbacks",
+            failures)
+    require("generation != self.detectionGeneration" in terminal_state and
+            "!self.detectionInProgress" in terminal_state and
+            "return" in terminal_state,
+            "Terminal callbacks must ignore stale generations and duplicate results",
             failures)
     require(not re.search(r"\b(?:print|println|NSLog)\s*\(", active_view_controller),
             "Detection callback must not log installed-app data or counts",
@@ -260,16 +275,16 @@ def main():
     require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "GitHub Actions" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
-    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "accessibility announcements" in readme.lower() and "detector lifetime" in readme.lower() and "retain cycle" in readme.lower(),
+    require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "accessibility announcements" in readme.lower() and "detector lifetime" in readme.lower() and "retain cycle" in readme.lower() and "stale callback" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
-    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "pinned macos ci" in vision.lower() and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "accessibility announcements" in vision.lower() and "detector lifetime" in vision.lower() and "retain cycle" in vision.lower(),
+    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "pinned macos ci" in vision.lower() and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "accessibility announcements" in vision.lower() and "detector lifetime" in vision.lower() and "retain cycle" in vision.lower() and "stale callback" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
-    require("installed-app" in security.lower() and "make check" in security and "github actions" in security.lower() and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower() and "retain cycle" in security.lower(),
+    require("installed-app" in security.lower() and "make check" in security and "github actions" in security.lower() and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower() and "retain cycle" in security.lower() and "stale callback" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
-    require("debug logging" in changes and "github actions" in changes.lower() and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "accessibility announcements" in changes.lower() and "detector lifetime" in changes.lower() and "retain cycle" in changes.lower(),
+    require("debug logging" in changes and "github actions" in changes.lower() and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "accessibility announcements" in changes.lower() and "detector lifetime" in changes.lower() and "retain cycle" in changes.lower() and "stale callback" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
@@ -304,6 +319,9 @@ def main():
             failures)
     require("status: completed" in hosted_validation_plan and "make check" in hosted_validation_plan,
             "hosted project validation plan must be completed and document make check",
+            failures)
+    require("status: completed" in stale_callback_plan and "mutations" in stale_callback_plan.lower(),
+            "stale detector callback plan must record completed mutation verification",
             failures)
     require("permissions:\n  contents: read" in workflow and
             "cancel-in-progress: true" in workflow and

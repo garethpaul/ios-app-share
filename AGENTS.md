@@ -47,6 +47,8 @@ user-triggered, local-only installed-app detection.
 - No required secret or credential file was identified in the repository scan. If you add integrations later, keep secrets out of git.
 - Installed-app detection is sensitive device metadata. Keep the sample local-only and user-triggered, avoid debug logging of detection results or counts, and document any future data flow before adding storage or transmission.
 - Keep the detection button accessibility text aligned with the local-only privacy boundary.
+- Keep terminal state generation-guarded so stale callbacks cannot release a
+  newer detector or overwrite its button state.
 - This looks like an Apple platform project or sample. Xcode, Swift, CocoaPods, and deployment target versions may need to match the original project era.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
