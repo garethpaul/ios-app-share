@@ -12,8 +12,9 @@ for the static baseline.
 ## Changes
 
 - Added `.github/workflows/check.yml` for GitHub Actions.
-- Ran the Python static baseline on Ubuntu with Python 3.12.
-- Kept full Xcode verification documented as a macOS legacy-toolchain task.
+- Integrated the static baseline into the pinned, least-privilege macOS gate.
+- Required current Xcode to parse `AppShare.xcodeproj` without selecting a
+  simulator.
 - Extended the checker and docs so the hosted gate remains visible.
 
 ## Verification

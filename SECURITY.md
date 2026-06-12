@@ -34,15 +34,20 @@ Helpful reports include:
   detection, duplicate scans, completed state UI, state-specific accessibility
   text and accessibility announcements for the local-only detection action, and
   installed-app logging/network regressions when Xcode is unavailable.
-- GitHub Actions runs only the SDK-free `make check` baseline. Do not add live
-  device collection, deployment, or credentialed service steps to that workflow
-  without a separate privacy and security review.
+- Terminal detector and main-queue callbacks use weak controller capture so a
+  stalled dependency cannot leave the view controller in a retain cycle.
+- GitHub Actions runs only the local-only `make check` baseline and Xcode
+  project parsing. Do not add live device collection, deployment, or
+  credentialed service steps without a separate privacy and security review.
 
 ## Mobile Privacy Notes
 
 If this project requests device permissions such as location, camera, microphone, contacts, Bluetooth, health data, or local storage access, reports should describe the permission involved and whether sensitive data can be accessed, persisted, or transmitted unexpectedly. Please avoid testing against real third-party user data or accounts you do not control.
 
 ## Dependency and Supply Chain Security
+
+GitHub Actions runs the installed-app privacy and Xcode project checks with
+read-only repository permissions before changes land.
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 

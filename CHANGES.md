@@ -2,8 +2,11 @@
 
 ## 2026-06-10
 
-- Added a GitHub Actions workflow that runs the SDK-free `make check` baseline
-  for the local-only app-detection sample.
+- Added pinned, least-privilege macOS GitHub Actions validation for the
+  app-detection baseline and current-Xcode project parsing.
+- Removed the detector callback retain cycle by capturing the view controller
+  weakly in both terminal detector callbacks and main-queue UI updates.
+- Preserved explicit detector lifetime through successful and failed scans.
 
 ## 2026-06-09
 
