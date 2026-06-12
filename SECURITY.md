@@ -36,6 +36,8 @@ Helpful reports include:
   installed-app logging/network regressions when Xcode is unavailable.
 - Terminal detector and main-queue callbacks use weak controller capture so a
   stalled dependency cannot leave the view controller in a retain cycle.
+- Scan generations reject a stale callback from an earlier retry or a duplicate
+  terminal result before it can release the active detector or change UI.
 - GitHub Actions runs only the local-only `make check` baseline and Xcode
   project parsing. Do not add live device collection, deployment, or
   credentialed service steps without a separate privacy and security review.

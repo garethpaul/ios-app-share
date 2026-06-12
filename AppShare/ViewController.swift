@@ -13,6 +13,7 @@ class ViewController: UIViewController {
     private let detectButton = UIButton(type: UIButtonType.System)
     private var detectionInProgress = false
     private var detectionCompleted = false
+    private var detectionGeneration = 0
     private var appDetector: iHasApp?
 
     override func viewDidLoad() {
@@ -57,12 +58,42 @@ class ViewController: UIViewController {
         }
     }
 
+    private func finishDetection(generation: Int, succeeded: Bool) {
+        if generation != self.detectionGeneration || !self.detectionInProgress {
+            return
+        }
+
+        self.appDetector = nil
+        self.detectionInProgress = false
+
+        if succeeded {
+            self.detectionCompleted = true
+            self.detectButton.enabled = false
+            self.detectButton.setTitle("Detection Complete", forState: UIControlState.Disabled)
+            self.updateDetectButtonAccessibility(
+                "Installed App Detection Complete",
+                hint: "Detection completed locally and the button is disabled",
+                announce: true)
+        }
+        else {
+            self.detectionCompleted = false
+            self.detectButton.enabled = true
+            self.detectButton.setTitle("Try Again", forState: UIControlState.Normal)
+            self.updateDetectButtonAccessibility(
+                "Try App Detection Again",
+                hint: "Previous local detection failed; double tap to retry",
+                announce: true)
+        }
+    }
+
     @IBAction func detectInstalledApps(sender: AnyObject) {
         if self.detectionInProgress || self.detectionCompleted {
             return
         }
 
         self.detectionInProgress = true
+        self.detectionGeneration += 1
+        let detectionGeneration = self.detectionGeneration
         self.detectButton.enabled = false
         self.detectButton.setTitle("Detecting...", forState: UIControlState.Disabled)
         self.updateDetectButtonAccessibility(
@@ -76,28 +107,13 @@ class ViewController: UIViewController {
         }, withSuccess: { [weak self] (_: [AnyObject]!) -> Void in
             dispatch_async(dispatch_get_main_queue()) { [weak self] in
                 if let strongSelf = self {
-                    strongSelf.appDetector = nil
-                    strongSelf.detectionInProgress = false
-                    strongSelf.detectionCompleted = true
-                    strongSelf.detectButton.enabled = false
-                    strongSelf.detectButton.setTitle("Detection Complete", forState: UIControlState.Disabled)
-                    strongSelf.updateDetectButtonAccessibility(
-                        "Installed App Detection Complete",
-                        hint: "Detection completed locally and the button is disabled",
-                        announce: true)
+                    strongSelf.finishDetection(detectionGeneration, succeeded: true)
                 }
             }
         }, withFailure: { [weak self] (_: NSError!) -> Void in
             dispatch_async(dispatch_get_main_queue()) { [weak self] in
                 if let strongSelf = self {
-                    strongSelf.appDetector = nil
-                    strongSelf.detectionInProgress = false
-                    strongSelf.detectButton.enabled = true
-                    strongSelf.detectButton.setTitle("Try Again", forState: UIControlState.Normal)
-                    strongSelf.updateDetectButtonAccessibility(
-                        "Try App Detection Again",
-                        hint: "Previous local detection failed; double tap to retry",
-                        announce: true)
+                    strongSelf.finishDetection(detectionGeneration, succeeded: false)
                 }
             }
         })

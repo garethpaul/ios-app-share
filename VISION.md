@@ -28,6 +28,7 @@ Priority:
 - Keep `make lint`, `make test`, `make build`, and `make check` available as
   local verification gates
 - Keep pinned macOS CI parsing `AppShare.xcodeproj` through the canonical gate
+- Ignore stale callbacks from earlier retries and duplicate terminal results
 
 Next priorities:
 
@@ -65,6 +66,8 @@ running, completed, and retry states.
 Detector lifetime should remain explicit while asynchronous scans are running.
 Terminal detector and main-queue callbacks should avoid a controller retain cycle
 while preserving main-queue UI updates.
+Only the active in-progress scan generation should apply a terminal result, so
+stale callback work cannot release a newer detector or overwrite its UI state.
 
 ## What We Will Not Merge (For Now)
 

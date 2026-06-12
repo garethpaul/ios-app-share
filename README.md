@@ -85,6 +85,8 @@ retained until success or failure callbacks finish.
 Terminal detector and main-queue callbacks capture the controller weakly so the
 explicit detector lifetime does not create a retain cycle if the dependency
 never completes.
+Each scan carries a generation token, so a stale callback from an earlier retry
+or a duplicate terminal callback cannot overwrite the active detector state.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -123,6 +125,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   detector lifetime guardrail.
 - See `docs/plans/2026-06-10-detector-callback-retain-cycle.md` for the detector
   callback ownership guardrail.
+- See `docs/plans/2026-06-12-stale-detector-callback-guard.md` for stale callback
+  and duplicate terminal-result handling.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions static
   baseline.

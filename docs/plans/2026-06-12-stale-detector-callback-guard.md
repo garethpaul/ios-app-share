@@ -1,6 +1,6 @@
 # Stale Detector Callback Guard
 
-status: planned
+status: completed
 
 ## Context
 
@@ -10,7 +10,7 @@ failed attempt reports late after the user starts a retry, stale work can clear
 the current detector and overwrite the active scan's button state. That can
 also release the new detector before its own terminal callback arrives.
 
-## Scope
+## Completed Scope
 
 - Assign a monotonically increasing generation to each user-triggered scan.
 - Apply success or failure state only when the callback belongs to the active
