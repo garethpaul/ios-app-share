@@ -320,8 +320,24 @@ def main():
     require("status: completed" in hosted_validation_plan and "make check" in hosted_validation_plan,
             "hosted project validation plan must be completed and document make check",
             failures)
-    require("status: completed" in stale_callback_plan and "mutations" in stale_callback_plan.lower(),
-            "stale detector callback plan must record completed mutation verification",
+    stale_callback_statuses = re.findall(
+        r"^status: .+$", stale_callback_plan, flags=re.MULTILINE
+    )
+    stale_callback_sections = stale_callback_plan.split("## Verification Completed\n", 1)
+    stale_callback_verification = (
+        stale_callback_sections[1] if len(stale_callback_sections) == 2 else ""
+    )
+    stale_callback_required_evidence = (
+        "All four Make gates",
+        "Pull-request run `27394392145`",
+        "push run `27394408704`",
+        "CodeQL setup run `27402322743`",
+        "Mutations removing either the generation comparison",
+    )
+    require(stale_callback_statuses == ["status: completed"]
+            and all(item in stale_callback_verification for item in stale_callback_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", stale_callback_verification, re.IGNORECASE) is None,
+            "stale detector callback plan must record completed status and actual verification",
             failures)
     require("permissions:\n  contents: read" in workflow and
             "cancel-in-progress: true" in workflow and
