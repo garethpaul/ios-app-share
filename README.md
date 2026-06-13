@@ -87,6 +87,8 @@ explicit detector lifetime does not create a retain cycle if the dependency
 never completes.
 Each scan carries a generation token, so a stale callback from an earlier retry
 or a duplicate terminal callback cannot overwrite the active detector state.
+A detector construction failure enters the same generation-scoped retry state
+before callback registration, avoiding a nil dereference or stuck progress UI.
 Both AppShare target configurations use the repository-relative bridging header
 at `AppShare/Bridge-Header.h`, so checkouts do not depend on a developer home
 directory.

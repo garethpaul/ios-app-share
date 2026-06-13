@@ -24,6 +24,7 @@ CI_BASELINE_PLAN = ROOT / "docs/plans/2026-06-10-ci-baseline.md"
 HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
 STALE_CALLBACK_PLAN = ROOT / "docs/plans/2026-06-12-stale-detector-callback-guard.md"
 RELATIVE_BRIDGE_PLAN = ROOT / "docs/plans/2026-06-13-relative-bridging-header.md"
+DETECTOR_CONSTRUCTION_PLAN = ROOT / "docs/plans/2026-06-13-detector-construction-failure.md"
 
 
 def require(condition, message, failures):
@@ -112,6 +113,7 @@ def main():
         "docs/plans/2026-06-10-hosted-project-validation.md",
         "docs/plans/2026-06-12-stale-detector-callback-guard.md",
         "docs/plans/2026-06-13-relative-bridging-header.md",
+        "docs/plans/2026-06-13-detector-construction-failure.md",
         "docs/readme-overview.svg",
     ]
 
@@ -157,6 +159,7 @@ def main():
     hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
     stale_callback_plan = STALE_CALLBACK_PLAN.read_text(encoding="utf-8") if STALE_CALLBACK_PLAN.exists() else ""
     relative_bridge_plan = RELATIVE_BRIDGE_PLAN.read_text(encoding="utf-8") if RELATIVE_BRIDGE_PLAN.exists() else ""
+    detector_construction_plan = DETECTOR_CONSTRUCTION_PLAN.read_text(encoding="utf-8") if DETECTOR_CONSTRUCTION_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
@@ -232,6 +235,20 @@ def main():
             "self.appDetector = nil" in terminal_state,
             "ViewController must retain the app detector during asynchronous detection and release it after callbacks",
             failures)
+    detector_new_index = detection_action.find("let detect = iHasApp.new()")
+    detector_nil_index = detection_action.find("if detect == nil")
+    detector_failure_index = detection_action.find(
+        "self.finishDetection(detectionGeneration, succeeded: false)")
+    detector_retain_index = detection_action.find("self.appDetector = detect")
+    detector_callback_index = detection_action.find(
+        "detect.detectAppDictionariesWithIncremental")
+    require(-1 not in [detector_new_index, detector_nil_index,
+                       detector_failure_index, detector_retain_index,
+                       detector_callback_index] and
+            detector_new_index < detector_nil_index < detector_failure_index <
+            detector_retain_index < detector_callback_index,
+            "Detector construction failure must enter generation-scoped retry state before retention or callbacks",
+            failures)
     require("detectButton.enabled = false" in active_view_controller and
             "detectButton.enabled = true" in terminal_state and
             "detectionCompleted = true" in terminal_state,
@@ -253,8 +270,8 @@ def main():
     require("private var detectionGeneration = 0" in active_view_controller and
             "self.detectionGeneration += 1" in detection_action and
             "let detectionGeneration = self.detectionGeneration" in detection_action and
-            detection_action.count("finishDetection(detectionGeneration") == 2,
-            "Each scan must capture a generation for both terminal callbacks",
+            detection_action.count("finishDetection(detectionGeneration") == 3,
+            "Each scan must capture a generation for construction failure and both terminal callbacks",
             failures)
     require("generation != self.detectionGeneration" in terminal_state and
             "!self.detectionInProgress" in terminal_state and
@@ -285,6 +302,9 @@ def main():
     require("repository-relative bridging header" in readme.lower(),
             "README must document the portable bridging-header setting",
             failures)
+    require("detector construction failure" in readme.lower(),
+            "README must document nil detector construction recovery",
+            failures)
     require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "accessibility announcements" in readme.lower() and "detector lifetime" in readme.lower() and "retain cycle" in readme.lower() and "stale callback" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
@@ -294,17 +314,26 @@ def main():
     require("repository-relative bridging header" in vision.lower(),
             "VISION must preserve checkout-independent bridge configuration",
             failures)
+    require("detector construction failure" in vision.lower(),
+            "VISION must preserve detector construction recovery",
+            failures)
     require("installed-app" in security.lower() and "make check" in security and "github actions" in security.lower() and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower() and "retain cycle" in security.lower() and "stale callback" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
     require("repository-relative bridging header" in security.lower(),
             "SECURITY must reject machine-local bridge configuration",
             failures)
+    require("detector construction failure" in security.lower(),
+            "SECURITY must document detector construction recovery",
+            failures)
     require("debug logging" in changes and "github actions" in changes.lower() and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "accessibility announcements" in changes.lower() and "detector lifetime" in changes.lower() and "retain cycle" in changes.lower() and "stale callback" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
             failures)
     require("repository-relative bridging header" in changes.lower(),
             "CHANGES must record portable bridge configuration",
+            failures)
+    require("detector construction failure" in changes.lower(),
+            "CHANGES must record detector construction recovery",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
             "plans must be marked completed",
@@ -343,6 +372,33 @@ def main():
             "All four Make gates" in relative_bridge_plan and
             "hostile mutations" in relative_bridge_plan.lower(),
             "relative bridging header plan must record completed status and actual verification",
+            failures)
+    detector_construction_statuses = re.findall(
+        r"^status: .+$", detector_construction_plan, flags=re.MULTILINE
+    )
+    detector_construction_sections = detector_construction_plan.split(
+        "## Verification Completed\n", 1
+    )
+    detector_construction_verification = (
+        detector_construction_sections[1]
+        if len(detector_construction_sections) == 2 else ""
+    )
+    detector_construction_required_evidence = (
+        "All four Make gates",
+        "`xcodebuild` was",
+        "python3 -m py_compile scripts/check-baseline.py",
+        "python3 -c",
+        "ruby -c Podfile",
+        "git diff --check",
+        "Five isolated hostile mutations",
+    )
+    require(detector_construction_statuses == ["status: completed"]
+            and all(item in detector_construction_verification
+                    for item in detector_construction_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b",
+                          detector_construction_verification,
+                          re.IGNORECASE) is None,
+            "detector construction failure plan must record completed status and actual local verification",
             failures)
     stale_callback_statuses = re.findall(
         r"^status: .+$", stale_callback_plan, flags=re.MULTILINE

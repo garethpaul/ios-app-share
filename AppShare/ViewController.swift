@@ -101,6 +101,10 @@ class ViewController: UIViewController {
             hint: "Detection is running locally without sending results",
             announce: true)
         let detect = iHasApp.new()
+        if detect == nil {
+            self.finishDetection(detectionGeneration, succeeded: false)
+            return
+        }
         self.appDetector = detect
         detect.detectAppDictionariesWithIncremental({ (_: [AnyObject]!) -> Void in
             // Detected app data stays local to this sample.

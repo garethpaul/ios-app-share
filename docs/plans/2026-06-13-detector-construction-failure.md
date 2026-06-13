@@ -1,6 +1,6 @@
 # Detector Construction Failure Guard
 
-status: planned
+status: completed
 
 ## Context
 
@@ -41,3 +41,29 @@ button and leave the local detection UI stuck in progress.
 - Hostile mutations must reject removal or reordering of the nil guard, bypass
   of generation-scoped retry state, stale plan status, and missing verification
   evidence.
+
+## Work Completed
+
+- Checked the Objective-C detector construction result before retention or
+  callback registration.
+- Routed nil construction through the existing generation-scoped failure path,
+  preserving retry button and accessibility behavior.
+- Added source-ordering contracts so construction failure cannot bypass terminal
+  state or occur after detector use.
+- Documented the failure boundary without changing dependency, project,
+  bridging-header, accessibility-copy, or workflow files.
+
+## Verification Completed
+
+- All four Make gates passed locally and reported that `xcodebuild` was
+  unavailable, so only the static iOS baseline ran on this host.
+- `python3 -m py_compile scripts/check-baseline.py`, `python3 -c` plist and
+  workflow YAML parsing, `ruby -c Podfile`, and `git diff --check` passed.
+- Five isolated hostile mutations were rejected: removed nil guard, detector
+  retention before the guard, direct button mutation instead of terminal state,
+  stale plan status, and missing verification evidence.
+- Exact-base comparison confirmed dependencies, Xcode metadata, bridge headers,
+  accessibility wording, and hosted workflow configuration remained unchanged.
+- Intended-file generated-artifact and secret-pattern scans passed.
+- Hosted macOS project parsing and code-scanning evidence is recorded separately
+  after push; this plan claims only the completed local static verification.
