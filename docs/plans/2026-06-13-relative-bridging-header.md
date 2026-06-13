@@ -1,6 +1,6 @@
 # Relative Bridging Header Path
 
-status: planned
+status: completed
 
 ## Context
 
@@ -67,3 +67,17 @@ only application target from compiling before source validation begins.
 - `git diff --check`
 - Hostile mutations restoring either absolute path, changing one configuration,
   weakening the exact count, or removing completion evidence must be rejected.
+
+## Verification Completed
+
+- All four Make gates (`make lint`, `make test`, `make build`, and
+  `make check`) passed against the completed project and plan.
+- `python3 -m py_compile scripts/check-baseline.py`, available plist/XML/workflow
+  parsers, and `git diff --check` passed.
+- A prepared baseline passed and seven hostile mutations were rejected. They
+  restored an absolute path, diverged or removed one configuration, added a
+  third setting, weakened the exact-count checker, reopened the plan, or removed
+  required verification evidence.
+- `xcodebuild` was unavailable on this Linux host, so current-Xcode project
+  parsing and legacy Swift compilation were not executed locally. The canonical
+  checker reported that limitation instead of claiming Xcode coverage.
