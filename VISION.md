@@ -29,6 +29,7 @@ Priority:
   local verification gates
 - Keep pinned macOS CI parsing `AppShare.xcodeproj` through the canonical gate
 - Ignore stale callbacks from earlier retries and duplicate terminal results
+- Route detector construction failure through generation-scoped retry state
 - Keep a repository-relative bridging header in every AppShare configuration
 
 Next priorities:

@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Routed detector construction failure through the generation-scoped retry
+  state before retention or callback registration.
 - Replaced both machine-local AppShare target bridge paths with the
   repository-relative bridging header at `AppShare/Bridge-Header.h`.
 
