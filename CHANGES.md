@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Made every Make verification target derive the checkout root so the static
+  app-detection baseline works from external directories.
 - Routed detector construction failure through the generation-scoped retry
   state before retention or callback registration.
 - Replaced both machine-local AppShare target bridge paths with the

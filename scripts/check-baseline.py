@@ -25,6 +25,7 @@ HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation
 STALE_CALLBACK_PLAN = ROOT / "docs/plans/2026-06-12-stale-detector-callback-guard.md"
 RELATIVE_BRIDGE_PLAN = ROOT / "docs/plans/2026-06-13-relative-bridging-header.md"
 DETECTOR_CONSTRUCTION_PLAN = ROOT / "docs/plans/2026-06-13-detector-construction-failure.md"
+LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
 
 
 def require(condition, message, failures):
@@ -114,6 +115,7 @@ def main():
         "docs/plans/2026-06-12-stale-detector-callback-guard.md",
         "docs/plans/2026-06-13-relative-bridging-header.md",
         "docs/plans/2026-06-13-detector-construction-failure.md",
+        "docs/plans/2026-06-13-location-independent-make.md",
         "docs/readme-overview.svg",
     ]
 
@@ -160,6 +162,7 @@ def main():
     stale_callback_plan = STALE_CALLBACK_PLAN.read_text(encoding="utf-8") if STALE_CALLBACK_PLAN.exists() else ""
     relative_bridge_plan = RELATIVE_BRIDGE_PLAN.read_text(encoding="utf-8") if RELATIVE_BRIDGE_PLAN.exists() else ""
     detector_construction_plan = DETECTOR_CONSTRUCTION_PLAN.read_text(encoding="utf-8") if DETECTOR_CONSTRUCTION_PLAN.exists() else ""
+    location_independent_make_plan = LOCATION_INDEPENDENT_MAKE_PLAN.read_text(encoding="utf-8") if LOCATION_INDEPENDENT_MAKE_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
@@ -296,6 +299,12 @@ def main():
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
+    require("ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile and '@python3 "$(ROOT)/scripts/check-baseline.py"' in makefile,
+            "Makefile must invoke the checker through the loaded checkout root", failures)
+    require("absolute Makefile path" in readme and "any working directory" in readme,
+            "README must document location-independent verification", failures)
+    require("Make verification target derive the checkout root" in changes and "external directories" in changes,
+            "CHANGES must record location-independent verification", failures)
     require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "GitHub Actions" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
@@ -400,6 +409,12 @@ def main():
                           re.IGNORECASE) is None,
             "detector construction failure plan must record completed status and actual local verification",
             failures)
+    location_statuses = re.findall(r"^status: .+$", location_independent_make_plan, flags=re.MULTILINE)
+    location_sections = location_independent_make_plan.split("## Verification Completed\n", 1)
+    location_verification = location_sections[1] if len(location_sections) == 2 else ""
+    location_required = ("Root and external-directory Make gates passed", "root-derivation mutation failed", "checker-invocation mutation failed", "plan-status mutation failed", "plan-evidence mutation failed", "documentation mutation failed")
+    require(location_statuses == ["status: completed"] and all(item in location_verification for item in location_required) and re.search(r"\b(?:pending|todo|tbd|not run)\b", location_verification, re.IGNORECASE) is None,
+            "location-independent Make plan must record completed verification", failures)
     stale_callback_statuses = re.findall(
         r"^status: .+$", stale_callback_plan, flags=re.MULTILINE
     )

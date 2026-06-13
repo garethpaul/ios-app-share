@@ -1,6 +1,6 @@
 # Location-Independent ios-app-share Verification
 
-status: planned
+status: completed
 
 ## Context
 
@@ -22,11 +22,20 @@ Absolute Makefile invocations resolve the maintained checker relative to the cal
 
 ## Work Completed
 
-Pending implementation.
+- Derived the checkout root from the loaded Makefile and invoked the checker through its absolute path.
+- Added rooted invocation, completed-plan evidence, and synchronized guidance.
+- Preserved application, project, pod, bridge, detector, and workflow files.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- Root and external-directory Make gates passed for all four aliases.
+- The root-derivation mutation failed.
+- The checker-invocation mutation failed.
+- The plan-status mutation failed.
+- The plan-evidence mutation failed.
+- The documentation mutation failed.
+- Checker compilation, shell and Podfile syntax, project metadata parsing,
+  diff hygiene, intended-path review, secret scanning, and artifact inspection passed.
 
 ## Risk And Rollback
 
