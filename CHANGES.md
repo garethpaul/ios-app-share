@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-13
+
+- Replaced both machine-local AppShare target bridge paths with the
+  repository-relative bridging header at `AppShare/Bridge-Header.h`.
+
 ## 2026-06-10
 
 - Added pinned, least-privilege macOS GitHub Actions validation for the

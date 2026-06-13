@@ -23,6 +23,7 @@ CALLBACK_RETAIN_CYCLE_PLAN = ROOT / "docs/plans/2026-06-10-detector-callback-ret
 CI_BASELINE_PLAN = ROOT / "docs/plans/2026-06-10-ci-baseline.md"
 HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
 STALE_CALLBACK_PLAN = ROOT / "docs/plans/2026-06-12-stale-detector-callback-guard.md"
+RELATIVE_BRIDGE_PLAN = ROOT / "docs/plans/2026-06-13-relative-bridging-header.md"
 
 
 def require(condition, message, failures):
@@ -110,6 +111,7 @@ def main():
         "docs/plans/2026-06-10-ci-baseline.md",
         "docs/plans/2026-06-10-hosted-project-validation.md",
         "docs/plans/2026-06-12-stale-detector-callback-guard.md",
+        "docs/plans/2026-06-13-relative-bridging-header.md",
         "docs/readme-overview.svg",
     ]
 
@@ -154,6 +156,7 @@ def main():
     ci_baseline_plan = CI_BASELINE_PLAN.read_text(encoding="utf-8") if CI_BASELINE_PLAN.exists() else ""
     hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
     stale_callback_plan = STALE_CALLBACK_PLAN.read_text(encoding="utf-8") if STALE_CALLBACK_PLAN.exists() else ""
+    relative_bridge_plan = RELATIVE_BRIDGE_PLAN.read_text(encoding="utf-8") if RELATIVE_BRIDGE_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
@@ -180,6 +183,10 @@ def main():
 
     require('#import "iHasApp.h"' in bridge,
             "Bridge header must expose iHasApp to Swift",
+            failures)
+    require(project.count("SWIFT_OBJC_BRIDGING_HEADER = AppShare/Bridge-Header.h;") == 2 and
+            re.search(r"SWIFT_OBJC_BRIDGING_HEADER\s*=\s*\"?/", project) is None,
+            "Debug and Release must use the repository-relative AppShare bridging header",
             failures)
     require("detectAppDictionariesWithIncremental" in detection_action and
             active_view_controller.count("detectAppDictionariesWithIncremental") == 1,
@@ -275,17 +282,29 @@ def main():
     require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "GitHub Actions" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
             failures)
+    require("repository-relative bridging header" in readme.lower(),
+            "README must document the portable bridging-header setting",
+            failures)
     require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "accessibility announcements" in readme.lower() and "detector lifetime" in readme.lower() and "retain cycle" in readme.lower() and "stale callback" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
     require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "pinned macos ci" in vision.lower() and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "accessibility announcements" in vision.lower() and "detector lifetime" in vision.lower() and "retain cycle" in vision.lower() and "stale callback" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
+    require("repository-relative bridging header" in vision.lower(),
+            "VISION must preserve checkout-independent bridge configuration",
+            failures)
     require("installed-app" in security.lower() and "make check" in security and "github actions" in security.lower() and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower() and "retain cycle" in security.lower() and "stale callback" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
+    require("repository-relative bridging header" in security.lower(),
+            "SECURITY must reject machine-local bridge configuration",
+            failures)
     require("debug logging" in changes and "github actions" in changes.lower() and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "accessibility announcements" in changes.lower() and "detector lifetime" in changes.lower() and "retain cycle" in changes.lower() and "stale callback" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
+            failures)
+    require("repository-relative bridging header" in changes.lower(),
+            "CHANGES must record portable bridge configuration",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
             "plans must be marked completed",
@@ -319,6 +338,11 @@ def main():
             failures)
     require("status: completed" in hosted_validation_plan and "make check" in hosted_validation_plan,
             "hosted project validation plan must be completed and document make check",
+            failures)
+    require("status: completed" in relative_bridge_plan and
+            "All four Make gates" in relative_bridge_plan and
+            "hostile mutations" in relative_bridge_plan.lower(),
+            "relative bridging header plan must record completed status and actual verification",
             failures)
     stale_callback_statuses = re.findall(
         r"^status: .+$", stale_callback_plan, flags=re.MULTILINE
