@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- Extended the pinned, read-only hosted baseline from default-branch pushes to
+  every branch push while preserving pull-request validation.
+
 ## 2026-06-13
 
 - Made every Make verification target derive the checkout root so the static

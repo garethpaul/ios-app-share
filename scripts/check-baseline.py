@@ -26,6 +26,7 @@ STALE_CALLBACK_PLAN = ROOT / "docs/plans/2026-06-12-stale-detector-callback-guar
 RELATIVE_BRIDGE_PLAN = ROOT / "docs/plans/2026-06-13-relative-bridging-header.md"
 DETECTOR_CONSTRUCTION_PLAN = ROOT / "docs/plans/2026-06-13-detector-construction-failure.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
+ALL_PUSH_CHECKS_PLAN = ROOT / "docs/plans/2026-06-17-all-push-checks.md"
 
 
 def require(condition, message, failures):
@@ -116,6 +117,7 @@ def main():
         "docs/plans/2026-06-13-relative-bridging-header.md",
         "docs/plans/2026-06-13-detector-construction-failure.md",
         "docs/plans/2026-06-13-location-independent-make.md",
+        "docs/plans/2026-06-17-all-push-checks.md",
         "docs/readme-overview.svg",
     ]
 
@@ -163,6 +165,7 @@ def main():
     relative_bridge_plan = RELATIVE_BRIDGE_PLAN.read_text(encoding="utf-8") if RELATIVE_BRIDGE_PLAN.exists() else ""
     detector_construction_plan = DETECTOR_CONSTRUCTION_PLAN.read_text(encoding="utf-8") if DETECTOR_CONSTRUCTION_PLAN.exists() else ""
     location_independent_make_plan = LOCATION_INDEPENDENT_MAKE_PLAN.read_text(encoding="utf-8") if LOCATION_INDEPENDENT_MAKE_PLAN.exists() else ""
+    all_push_checks_plan = ALL_PUSH_CHECKS_PLAN.read_text(encoding="utf-8") if ALL_PUSH_CHECKS_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
@@ -415,6 +418,12 @@ def main():
     location_required = ("Root and external-directory Make gates passed", "root-derivation mutation failed", "checker-invocation mutation failed", "plan-status mutation failed", "plan-evidence mutation failed", "documentation mutation failed")
     require(location_statuses == ["status: completed"] and all(item in location_verification for item in location_required) and re.search(r"\b(?:pending|todo|tbd|not run)\b", location_verification, re.IGNORECASE) is None,
             "location-independent Make plan must record completed verification", failures)
+    all_push_statuses = re.findall(r"^status: .+$", all_push_checks_plan, flags=re.MULTILINE)
+    all_push_sections = all_push_checks_plan.split("## Verification Completed\n", 1)
+    all_push_verification = all_push_sections[1] if len(all_push_sections) == 2 else ""
+    all_push_required = ("All four Make gates", "external-directory Make gate", "Six isolated trigger", "plan-evidence mutations were rejected")
+    require(all_push_statuses == ["status: completed"] and all(item in all_push_verification for item in all_push_required) and re.search(r"\b(?:pending|todo|tbd|not run)\b", all_push_verification, re.IGNORECASE) is None,
+            "all-push hosted checks plan must record completed verification", failures)
     stale_callback_statuses = re.findall(
         r"^status: .+$", stale_callback_plan, flags=re.MULTILINE
     )
@@ -442,6 +451,14 @@ def main():
             "persist-credentials: false" in workflow and
             "run: make check" in workflow,
             "GitHub Actions must keep the bounded, least-privilege macOS project check",
+            failures)
+    require("on:\n  push:\n  pull_request:" in workflow and
+            "branches:" not in workflow,
+            "GitHub Actions must run the canonical check for every push and pull request",
+            failures)
+    require("2026-06-17-all-push-checks.md" in readme and
+            "every branch push and pull request" in readme,
+            "README must document all-push and pull-request hosted validation",
             failures)
     action_uses = re.findall(r"^\s*uses:\s*(\S+)\s*$", workflow, re.MULTILINE)
     require(action_uses == ["actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"],

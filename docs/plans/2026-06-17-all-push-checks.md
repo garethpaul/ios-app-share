@@ -1,6 +1,6 @@
 # All-Push Hosted Checks
 
-status: planned
+status: completed
 
 ## Context
 
@@ -41,8 +41,20 @@ evidence from covering both normal GitHub event paths.
 
 ## Work Completed
 
-Pending implementation.
+- Removed the default-branch filter from the existing push trigger so the same
+  bounded, read-only job runs for every pushed branch and every pull request.
+- Added a static trigger contract that rejects branch-restricted push coverage
+  while preserving the workflow safeguards and canonical `make check` command.
+- Documented the expanded hosted event coverage without changing app code,
+  dependencies, project metadata, or signing.
 
 ## Verification Completed
 
-Pending implementation.
+- All four Make gates passed locally and truthfully reported that `xcodebuild`
+  was unavailable on this Linux host, so only the static iOS baseline ran.
+- The external-directory Make gate passed through the absolute checkout path.
+- Workflow YAML parsing, Python bytecode compilation, and `git diff --check`
+  passed.
+- Six isolated trigger, safeguard, documentation, plan-status, and
+  plan-evidence mutations were rejected by the canonical gate.
+- Intended-file artifact and credential-pattern scans passed.
