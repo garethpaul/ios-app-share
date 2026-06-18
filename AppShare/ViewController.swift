@@ -15,6 +15,8 @@ class ViewController: UIViewController {
     private var detectionCompleted = false
     private var detectionGeneration = 0
     private var appDetector: iHasApp?
+    private let detectionTimeoutInterval: NSTimeInterval = 30.0
+    private var detectionTimeoutTimer: NSTimer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -63,6 +65,8 @@ class ViewController: UIViewController {
             return
         }
 
+        self.detectionTimeoutTimer?.invalidate()
+        self.detectionTimeoutTimer = nil
         self.appDetector = nil
         self.detectionInProgress = false
 
@@ -86,6 +90,21 @@ class ViewController: UIViewController {
         }
     }
 
+    private func scheduleDetectionTimeout(generation: Int) {
+        self.detectionTimeoutTimer = NSTimer.scheduledTimerWithTimeInterval(
+            self.detectionTimeoutInterval,
+            target: self,
+            selector: "detectionTimedOut:",
+            userInfo: NSNumber(integer: generation),
+            repeats: false)
+    }
+
+    func detectionTimedOut(timer: NSTimer) {
+        if let generation = timer.userInfo as? NSNumber {
+            self.finishDetection(generation.integerValue, succeeded: false)
+        }
+    }
+
     @IBAction func detectInstalledApps(sender: AnyObject) {
         if self.detectionInProgress || self.detectionCompleted {
             return
@@ -106,6 +125,7 @@ class ViewController: UIViewController {
             return
         }
         self.appDetector = detect
+        self.scheduleDetectionTimeout(detectionGeneration)
         detect.detectAppDictionariesWithIncremental({ (_: [AnyObject]!) -> Void in
             // Detected app data stays local to this sample.
         }, withSuccess: { [weak self] (_: [AnyObject]!) -> Void in

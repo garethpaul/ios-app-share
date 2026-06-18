@@ -49,6 +49,9 @@ user-triggered, local-only installed-app detection.
 - Keep the detection button accessibility text aligned with the local-only privacy boundary.
 - Keep terminal state generation-guarded so stale callbacks cannot release a
   newer detector or overwrite its button state.
+- Keep the detector completion timeout generation-owned, invalidate it before
+  accepted terminal cleanup, and route timeout recovery through the existing
+  failure state rather than duplicating button or accessibility mutations.
 - This looks like an Apple platform project or sample. Xcode, Swift, CocoaPods, and deployment target versions may need to match the original project era.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.

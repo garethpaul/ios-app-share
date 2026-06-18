@@ -29,6 +29,8 @@ Priority:
   local verification gates
 - Keep pinned macOS CI parsing `AppShare.xcodeproj` through the canonical gate
 - Ignore stale callbacks from earlier retries and duplicate terminal results
+- Bound detector completion with a timeout that returns an abandoned scan to
+  retry state and ignores any late callback
 - Route detector construction failure through generation-scoped retry state
 - Keep a repository-relative bridging header in every AppShare configuration
 
@@ -70,6 +72,9 @@ Terminal detector and main-queue callbacks should avoid a controller retain cycl
 while preserving main-queue UI updates.
 Only the active in-progress scan generation should apply a terminal result, so
 stale callback work cannot release a newer detector or overwrite its UI state.
+A completion timeout should route a detector that never finishes through the
+same generation-scoped retry path, release it, and leave any late callback
+inert.
 The repository-relative bridging header should keep Objective-C dependency
 resolution independent of the original developer's checkout path.
 

@@ -89,6 +89,9 @@ Each scan carries a generation token, so a stale callback from an earlier retry
 or a duplicate terminal callback cannot overwrite the active detector state.
 A detector construction failure enters the same generation-scoped retry state
 before callback registration, avoiding a nil dereference or stuck progress UI.
+Each constructed detector also receives a completion timeout. If the retired
+dependency never reports success or failure, the active generation returns to
+the existing retry state, releases the detector, and ignores any late callback.
 Both AppShare target configurations use the repository-relative bridging header
 at `AppShare/Bridge-Header.h`, so checkouts do not depend on a developer home
 directory.

@@ -2,7 +2,7 @@
 title: "fix: recover when installed-app detection never completes"
 date: 2026-06-18
 type: fix
-status: planned
+status: completed
 ---
 
 # Detector Completion Timeout
@@ -155,3 +155,23 @@ all completion races.
 None block implementation. The timeout duration will use a conservative named
 constant suitable for a sample application and remain easy to revise after
 historical-device evidence becomes available.
+
+## Work Completed
+
+- Added a one-shot, generation-owned detector completion timeout that routes a
+  stalled scan through the existing retry state.
+- Invalidated and cleared the timeout before accepted terminal cleanup, while
+  preserving the existing generation guard for queued late delivery.
+- Extended the canonical checker and maintainer guidance for scheduling,
+  invalidation, failure-path reuse, privacy, and late-callback rejection.
+
+## Verification Completed
+
+- All four Make gates passed in an isolated finalized-plan copy and again in the
+  exact worktree; Linux truthfully skipped unavailable `xcodebuild` execution.
+- The external-directory Make gate passed through the absolute checkout path.
+- Six isolated timeout lifecycle mutations were rejected: removed timer
+  retention, removed scheduling, removed invalidation, removed generation
+  payload, changed timeout recovery to success, and a plan-evidence mutation.
+- Python syntax, exact diff, generated-artifact, conflict-marker, file-mode, and
+  credential-shaped addition audits passed.

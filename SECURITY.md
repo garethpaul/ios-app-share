@@ -38,6 +38,9 @@ Helpful reports include:
   stalled dependency cannot leave the view controller in a retain cycle.
 - Scan generations reject a stale callback from an earlier retry or a duplicate
   terminal result before it can release the active detector or change UI.
+- A completion timeout releases a detector that never reports a terminal result
+  through generation-scoped retry state, so any late callback cannot overwrite
+  a newer scan.
 - A detector construction failure must enter the existing local retry state
   before detector retention or callback registration.
 - The AppShare target must use the repository-relative bridging header rather

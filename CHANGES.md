@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-18
+
+- Added a generation-owned detector completion timeout so a missing terminal
+  callback returns the local UI to retry state, releases the detector, and
+  leaves any late callback unable to overwrite newer work.
+
 ## 2026-06-17
 
 - Extended the pinned, read-only hosted baseline from default-branch pushes to
