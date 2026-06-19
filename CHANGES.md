@@ -5,6 +5,9 @@
 - Added a generation-owned detector completion timeout so a missing terminal
   callback returns the local UI to retry state, releases the detector, and
   leaves any late callback unable to overwrite newer work.
+- Routed timeout delivery through a weak timer target and invalidated the active
+  timer during controller teardown so timeout recovery does not retain the
+  controller lifecycle.
 
 ## 2026-06-17
 

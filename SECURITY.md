@@ -41,6 +41,8 @@ Helpful reports include:
 - A completion timeout releases a detector that never reports a terminal result
   through generation-scoped retry state, so any late callback cannot overwrite
   a newer scan.
+- Timeout delivery must use a weak target and teardown invalidation so stalled
+  detection recovery does not retain the view controller lifecycle.
 - A detector construction failure must enter the existing local retry state
   before detector retention or callback registration.
 - The AppShare target must use the repository-relative bridging header rather

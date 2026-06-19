@@ -175,6 +175,7 @@ def main():
     terminal_state = swift_function_body(active_view_controller, "private func finishDetection")
     timeout_scheduler = swift_function_body(active_view_controller, "private func scheduleDetectionTimeout")
     timeout_handler = swift_function_body(active_view_controller, "func detectionTimedOut")
+    deinit_body = swift_function_body(active_view_controller, "deinit")
 
     require("pod 'iHasApp'" in podfile,
             "Podfile must preserve the iHasApp dependency",
@@ -268,14 +269,25 @@ def main():
             failures)
     require("NSTimer.scheduledTimerWithTimeInterval" in timeout_scheduler and
             "self.detectionTimeoutInterval" in timeout_scheduler and
-            'selector: "detectionTimedOut:"' in timeout_scheduler and
+            "target: self.detectionTimeoutTarget" in timeout_scheduler and
+            'selector: "timerFired:"' in timeout_scheduler and
             "userInfo: NSNumber(integer: generation)" in timeout_scheduler and
             "repeats: false" in timeout_scheduler,
             "Each successful detector construction must schedule one generation-owned timeout",
             failures)
+    require("private final class WeakTimerTarget: NSObject" in active_view_controller and
+            "private weak var viewController: ViewController?" in active_view_controller and
+            "self.viewController?.detectionTimedOut(timer)" in active_view_controller and
+            "private lazy var detectionTimeoutTarget" in active_view_controller and
+            "target: self," not in timeout_scheduler,
+            "Detector timeout timer must use a weak target instead of retaining the view controller",
+            failures)
     require("timer.userInfo as? NSNumber" in timeout_handler and
             "self.finishDetection(generation.integerValue, succeeded: false)" in timeout_handler,
             "Timeout delivery must reuse generation-scoped failure state",
+            failures)
+    require("self.detectionTimeoutTimer?.invalidate()" in deinit_body,
+            "ViewController teardown must invalidate any active detector timeout",
             failures)
     timeout_invalidate_index = terminal_state.find("self.detectionTimeoutTimer?.invalidate()")
     timeout_clear_index = terminal_state.find("self.detectionTimeoutTimer = nil")
@@ -471,7 +483,9 @@ def main():
     detector_timeout_required = (
         "All four Make gates",
         "external-directory Make gate",
-        "Six isolated timeout",
+        "Seven isolated timeout",
+        "direct controller timer targeting",
+        "teardown invalidation",
         "plan-evidence mutation",
     )
     require(detector_timeout_statuses == ["status: completed"] and

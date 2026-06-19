@@ -8,6 +8,19 @@
 
 import UIKit
 
+private final class WeakTimerTarget: NSObject {
+    private weak var viewController: ViewController?
+
+    init(viewController: ViewController) {
+        self.viewController = viewController
+        super.init()
+    }
+
+    func timerFired(timer: NSTimer) {
+        self.viewController?.detectionTimedOut(timer)
+    }
+}
+
 class ViewController: UIViewController {
 
     private let detectButton = UIButton(type: UIButtonType.System)
@@ -17,6 +30,11 @@ class ViewController: UIViewController {
     private var appDetector: iHasApp?
     private let detectionTimeoutInterval: NSTimeInterval = 30.0
     private var detectionTimeoutTimer: NSTimer?
+    private lazy var detectionTimeoutTarget = WeakTimerTarget(viewController: self)
+
+    deinit {
+        self.detectionTimeoutTimer?.invalidate()
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -93,8 +111,8 @@ class ViewController: UIViewController {
     private func scheduleDetectionTimeout(generation: Int) {
         self.detectionTimeoutTimer = NSTimer.scheduledTimerWithTimeInterval(
             self.detectionTimeoutInterval,
-            target: self,
-            selector: "detectionTimedOut:",
+            target: self.detectionTimeoutTarget,
+            selector: "timerFired:",
             userInfo: NSNumber(integer: generation),
             repeats: false)
     }

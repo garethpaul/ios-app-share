@@ -75,6 +75,9 @@ stale callback work cannot release a newer detector or overwrite its UI state.
 A completion timeout should route a detector that never finishes through the
 same generation-scoped retry path, release it, and leave any late callback
 inert.
+Timeout delivery should use a weak target and controller teardown should
+invalidate the active timer so lifecycle cleanup does not depend on the timeout
+firing.
 The repository-relative bridging header should keep Objective-C dependency
 resolution independent of the original developer's checkout path.
 

@@ -52,6 +52,8 @@ user-triggered, local-only installed-app detection.
 - Keep the detector completion timeout generation-owned, invalidate it before
   accepted terminal cleanup, and route timeout recovery through the existing
   failure state rather than duplicating button or accessibility mutations.
+- Keep timeout delivery weak-targeted and invalidate any active timeout during
+  view-controller teardown.
 - This looks like an Apple platform project or sample. Xcode, Swift, CocoaPods, and deployment target versions may need to match the original project era.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.

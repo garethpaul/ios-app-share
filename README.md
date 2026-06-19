@@ -92,6 +92,9 @@ before callback registration, avoiding a nil dereference or stuck progress UI.
 Each constructed detector also receives a completion timeout. If the retired
 dependency never reports success or failure, the active generation returns to
 the existing retry state, releases the detector, and ignores any late callback.
+Timeout delivery uses a weak timer target and the controller invalidates the
+active timeout during teardown, so bounded recovery does not become a controller
+lifecycle retain path.
 Both AppShare target configurations use the repository-relative bridging header
 at `AppShare/Bridge-Header.h`, so checkouts do not depend on a developer home
 directory.

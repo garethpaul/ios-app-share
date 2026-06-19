@@ -162,16 +162,20 @@ historical-device evidence becomes available.
   stalled scan through the existing retry state.
 - Invalidated and cleared the timeout before accepted terminal cleanup, while
   preserving the existing generation guard for queued late delivery.
+- Routed timeout delivery through a weak target and invalidated any active timer
+  during controller teardown so recovery does not retain the controller.
 - Extended the canonical checker and maintainer guidance for scheduling,
-  invalidation, failure-path reuse, privacy, and late-callback rejection.
+  weak-target delivery, invalidation, failure-path reuse, privacy, and
+  late-callback rejection.
 
 ## Verification Completed
 
 - All four Make gates passed in an isolated finalized-plan copy and again in the
   exact worktree; Linux truthfully skipped unavailable `xcodebuild` execution.
 - The external-directory Make gate passed through the absolute checkout path.
-- Six isolated timeout lifecycle mutations were rejected: removed timer
-  retention, removed scheduling, removed invalidation, removed generation
-  payload, changed timeout recovery to success, and a plan-evidence mutation.
+- Seven isolated timeout lifecycle mutations were rejected: removed timer
+  retention, removed scheduling, direct controller timer targeting, removed
+  teardown invalidation, removed generation payload, changed timeout recovery to
+  success, and a plan-evidence mutation.
 - Python syntax, exact diff, generated-artifact, conflict-marker, file-mode, and
   credential-shaped addition audits passed.
