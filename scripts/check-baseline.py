@@ -23,6 +23,11 @@ CALLBACK_RETAIN_CYCLE_PLAN = ROOT / "docs/plans/2026-06-10-detector-callback-ret
 CI_BASELINE_PLAN = ROOT / "docs/plans/2026-06-10-ci-baseline.md"
 HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
 STALE_CALLBACK_PLAN = ROOT / "docs/plans/2026-06-12-stale-detector-callback-guard.md"
+RELATIVE_BRIDGE_PLAN = ROOT / "docs/plans/2026-06-13-relative-bridging-header.md"
+DETECTOR_CONSTRUCTION_PLAN = ROOT / "docs/plans/2026-06-13-detector-construction-failure.md"
+LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
+ALL_PUSH_CHECKS_PLAN = ROOT / "docs/plans/2026-06-17-all-push-checks.md"
+DETECTOR_TIMEOUT_PLAN = ROOT / "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md"
 
 
 def require(condition, message, failures):
@@ -110,6 +115,11 @@ def main():
         "docs/plans/2026-06-10-ci-baseline.md",
         "docs/plans/2026-06-10-hosted-project-validation.md",
         "docs/plans/2026-06-12-stale-detector-callback-guard.md",
+        "docs/plans/2026-06-13-relative-bridging-header.md",
+        "docs/plans/2026-06-13-detector-construction-failure.md",
+        "docs/plans/2026-06-13-location-independent-make.md",
+        "docs/plans/2026-06-17-all-push-checks.md",
+        "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md",
         "docs/readme-overview.svg",
     ]
 
@@ -154,10 +164,18 @@ def main():
     ci_baseline_plan = CI_BASELINE_PLAN.read_text(encoding="utf-8") if CI_BASELINE_PLAN.exists() else ""
     hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
     stale_callback_plan = STALE_CALLBACK_PLAN.read_text(encoding="utf-8") if STALE_CALLBACK_PLAN.exists() else ""
+    relative_bridge_plan = RELATIVE_BRIDGE_PLAN.read_text(encoding="utf-8") if RELATIVE_BRIDGE_PLAN.exists() else ""
+    detector_construction_plan = DETECTOR_CONSTRUCTION_PLAN.read_text(encoding="utf-8") if DETECTOR_CONSTRUCTION_PLAN.exists() else ""
+    location_independent_make_plan = LOCATION_INDEPENDENT_MAKE_PLAN.read_text(encoding="utf-8") if LOCATION_INDEPENDENT_MAKE_PLAN.exists() else ""
+    all_push_checks_plan = ALL_PUSH_CHECKS_PLAN.read_text(encoding="utf-8") if ALL_PUSH_CHECKS_PLAN.exists() else ""
+    detector_timeout_plan = DETECTOR_TIMEOUT_PLAN.read_text(encoding="utf-8") if DETECTOR_TIMEOUT_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
     terminal_state = swift_function_body(active_view_controller, "private func finishDetection")
+    timeout_scheduler = swift_function_body(active_view_controller, "private func scheduleDetectionTimeout")
+    timeout_handler = swift_function_body(active_view_controller, "func detectionTimedOut")
+    deinit_body = swift_function_body(active_view_controller, "deinit")
 
     require("pod 'iHasApp'" in podfile,
             "Podfile must preserve the iHasApp dependency",
@@ -180,6 +198,10 @@ def main():
 
     require('#import "iHasApp.h"' in bridge,
             "Bridge header must expose iHasApp to Swift",
+            failures)
+    require(project.count("SWIFT_OBJC_BRIDGING_HEADER = AppShare/Bridge-Header.h;") == 2 and
+            re.search(r"SWIFT_OBJC_BRIDGING_HEADER\s*=\s*\"?/", project) is None,
+            "Debug and Release must use the repository-relative AppShare bridging header",
             failures)
     require("detectAppDictionariesWithIncremental" in detection_action and
             active_view_controller.count("detectAppDictionariesWithIncremental") == 1,
@@ -225,6 +247,55 @@ def main():
             "self.appDetector = nil" in terminal_state,
             "ViewController must retain the app detector during asynchronous detection and release it after callbacks",
             failures)
+    require("private let detectionTimeoutInterval: NSTimeInterval = 30.0" in active_view_controller and
+            "private var detectionTimeoutTimer: NSTimer?" in active_view_controller,
+            "ViewController must keep a named, retained completion timeout",
+            failures)
+    detector_new_index = detection_action.find("let detect = iHasApp.new()")
+    detector_nil_index = detection_action.find("if detect == nil")
+    detector_failure_index = detection_action.find(
+        "self.finishDetection(detectionGeneration, succeeded: false)")
+    detector_retain_index = detection_action.find("self.appDetector = detect")
+    detector_timeout_index = detection_action.find(
+        "self.scheduleDetectionTimeout(detectionGeneration)")
+    detector_callback_index = detection_action.find(
+        "detect.detectAppDictionariesWithIncremental")
+    require(-1 not in [detector_new_index, detector_nil_index,
+                       detector_failure_index, detector_retain_index,
+                       detector_timeout_index, detector_callback_index] and
+            detector_new_index < detector_nil_index < detector_failure_index <
+            detector_retain_index < detector_timeout_index < detector_callback_index,
+            "Detector construction failure must precede retention, timeout scheduling, and callbacks",
+            failures)
+    require("NSTimer.scheduledTimerWithTimeInterval" in timeout_scheduler and
+            "self.detectionTimeoutInterval" in timeout_scheduler and
+            "target: self.detectionTimeoutTarget" in timeout_scheduler and
+            'selector: "timerFired:"' in timeout_scheduler and
+            "userInfo: NSNumber(integer: generation)" in timeout_scheduler and
+            "repeats: false" in timeout_scheduler,
+            "Each successful detector construction must schedule one generation-owned timeout",
+            failures)
+    require("private final class WeakTimerTarget: NSObject" in active_view_controller and
+            "private weak var viewController: ViewController?" in active_view_controller and
+            "self.viewController?.detectionTimedOut(timer)" in active_view_controller and
+            "private lazy var detectionTimeoutTarget" in active_view_controller and
+            "target: self," not in timeout_scheduler,
+            "Detector timeout timer must use a weak target instead of retaining the view controller",
+            failures)
+    require("timer.userInfo as? NSNumber" in timeout_handler and
+            "self.finishDetection(generation.integerValue, succeeded: false)" in timeout_handler,
+            "Timeout delivery must reuse generation-scoped failure state",
+            failures)
+    require("self.detectionTimeoutTimer?.invalidate()" in deinit_body,
+            "ViewController teardown must invalidate any active detector timeout",
+            failures)
+    timeout_invalidate_index = terminal_state.find("self.detectionTimeoutTimer?.invalidate()")
+    timeout_clear_index = terminal_state.find("self.detectionTimeoutTimer = nil")
+    detector_clear_index = terminal_state.find("self.appDetector = nil")
+    require(-1 not in [timeout_invalidate_index, timeout_clear_index, detector_clear_index] and
+            timeout_invalidate_index < timeout_clear_index < detector_clear_index,
+            "Accepted terminal state must invalidate and clear the timeout before releasing the detector",
+            failures)
     require("detectButton.enabled = false" in active_view_controller and
             "detectButton.enabled = true" in terminal_state and
             "detectionCompleted = true" in terminal_state,
@@ -246,8 +317,8 @@ def main():
     require("private var detectionGeneration = 0" in active_view_controller and
             "self.detectionGeneration += 1" in detection_action and
             "let detectionGeneration = self.detectionGeneration" in detection_action and
-            detection_action.count("finishDetection(detectionGeneration") == 2,
-            "Each scan must capture a generation for both terminal callbacks",
+            detection_action.count("finishDetection(detectionGeneration") == 3,
+            "Each scan must capture a generation for construction failure and both terminal callbacks",
             failures)
     require("generation != self.detectionGeneration" in terminal_state and
             "!self.detectionInProgress" in terminal_state and
@@ -272,8 +343,23 @@ def main():
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
+    require("ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile and '@python3 "$(ROOT)/scripts/check-baseline.py"' in makefile,
+            "Makefile must invoke the checker through the loaded checkout root", failures)
+    require("absolute Makefile path" in readme and "any working directory" in readme,
+            "README must document location-independent verification", failures)
+    require("Make verification target derive the checkout root" in changes and "external directories" in changes,
+            "CHANGES must record location-independent verification", failures)
     require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "GitHub Actions" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
+            failures)
+    require("repository-relative bridging header" in readme.lower(),
+            "README must document the portable bridging-header setting",
+            failures)
+    require("detector construction failure" in readme.lower(),
+            "README must document nil detector construction recovery",
+            failures)
+    require("completion timeout" in readme.lower() and "late callback" in readme.lower(),
+            "README must document bounded detector recovery and late-callback rejection",
             failures)
     require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "accessibility announcements" in readme.lower() and "detector lifetime" in readme.lower() and "retain cycle" in readme.lower() and "stale callback" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
@@ -281,11 +367,38 @@ def main():
     require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "pinned macos ci" in vision.lower() and "local-only" in vision.lower() and "main queue" in vision.lower() and "in-progress" in vision.lower() and "completed state" in vision.lower() and "state-specific accessibility" in vision.lower() and "accessibility announcements" in vision.lower() and "detector lifetime" in vision.lower() and "retain cycle" in vision.lower() and "stale callback" in vision.lower(),
             "VISION must describe the current static privacy baseline",
             failures)
+    require("repository-relative bridging header" in vision.lower(),
+            "VISION must preserve checkout-independent bridge configuration",
+            failures)
+    require("detector construction failure" in vision.lower(),
+            "VISION must preserve detector construction recovery",
+            failures)
+    require("completion timeout" in vision.lower() and "late callback" in vision.lower(),
+            "VISION must preserve bounded detector recovery",
+            failures)
     require("installed-app" in security.lower() and "make check" in security and "github actions" in security.lower() and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower() and "retain cycle" in security.lower() and "stale callback" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
             failures)
+    require("repository-relative bridging header" in security.lower(),
+            "SECURITY must reject machine-local bridge configuration",
+            failures)
+    require("detector construction failure" in security.lower(),
+            "SECURITY must document detector construction recovery",
+            failures)
+    require("completion timeout" in security.lower() and "late callback" in security.lower(),
+            "SECURITY must document timeout cleanup and stale-result protection",
+            failures)
     require("debug logging" in changes and "github actions" in changes.lower() and "make check" in changes and "make lint" in changes and "make test" in changes and "make build" in changes and "user-triggered" in changes and "main queue" in changes.lower() and "in-progress" in changes and "completed state" in changes.lower() and "state-specific accessibility" in changes.lower() and "accessibility announcements" in changes.lower() and "detector lifetime" in changes.lower() and "retain cycle" in changes.lower() and "stale callback" in changes.lower(),
             "CHANGES must record the logging cleanup, user-triggered detection, and baseline",
+            failures)
+    require("repository-relative bridging header" in changes.lower(),
+            "CHANGES must record portable bridge configuration",
+            failures)
+    require("detector construction failure" in changes.lower(),
+            "CHANGES must record detector construction recovery",
+            failures)
+    require("completion timeout" in changes.lower() and "late callback" in changes.lower(),
+            "CHANGES must record bounded detector recovery",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
             "plans must be marked completed",
@@ -320,8 +433,84 @@ def main():
     require("status: completed" in hosted_validation_plan and "make check" in hosted_validation_plan,
             "hosted project validation plan must be completed and document make check",
             failures)
-    require("status: completed" in stale_callback_plan and "mutations" in stale_callback_plan.lower(),
-            "stale detector callback plan must record completed mutation verification",
+    require("status: completed" in relative_bridge_plan and
+            "All four Make gates" in relative_bridge_plan and
+            "hostile mutations" in relative_bridge_plan.lower(),
+            "relative bridging header plan must record completed status and actual verification",
+            failures)
+    detector_construction_statuses = re.findall(
+        r"^status: .+$", detector_construction_plan, flags=re.MULTILINE
+    )
+    detector_construction_sections = detector_construction_plan.split(
+        "## Verification Completed\n", 1
+    )
+    detector_construction_verification = (
+        detector_construction_sections[1]
+        if len(detector_construction_sections) == 2 else ""
+    )
+    detector_construction_required_evidence = (
+        "All four Make gates",
+        "`xcodebuild` was",
+        "python3 -m py_compile scripts/check-baseline.py",
+        "python3 -c",
+        "ruby -c Podfile",
+        "git diff --check",
+        "Five isolated hostile mutations",
+    )
+    require(detector_construction_statuses == ["status: completed"]
+            and all(item in detector_construction_verification
+                    for item in detector_construction_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b",
+                          detector_construction_verification,
+                          re.IGNORECASE) is None,
+            "detector construction failure plan must record completed status and actual local verification",
+            failures)
+    location_statuses = re.findall(r"^status: .+$", location_independent_make_plan, flags=re.MULTILINE)
+    location_sections = location_independent_make_plan.split("## Verification Completed\n", 1)
+    location_verification = location_sections[1] if len(location_sections) == 2 else ""
+    location_required = ("Root and external-directory Make gates passed", "root-derivation mutation failed", "checker-invocation mutation failed", "plan-status mutation failed", "plan-evidence mutation failed", "documentation mutation failed")
+    require(location_statuses == ["status: completed"] and all(item in location_verification for item in location_required) and re.search(r"\b(?:pending|todo|tbd|not run)\b", location_verification, re.IGNORECASE) is None,
+            "location-independent Make plan must record completed verification", failures)
+    all_push_statuses = re.findall(r"^status: .+$", all_push_checks_plan, flags=re.MULTILINE)
+    all_push_sections = all_push_checks_plan.split("## Verification Completed\n", 1)
+    all_push_verification = all_push_sections[1] if len(all_push_sections) == 2 else ""
+    all_push_required = ("All four Make gates", "external-directory Make gate", "Six isolated trigger", "plan-evidence mutations were rejected")
+    require(all_push_statuses == ["status: completed"] and all(item in all_push_verification for item in all_push_required) and re.search(r"\b(?:pending|todo|tbd|not run)\b", all_push_verification, re.IGNORECASE) is None,
+            "all-push hosted checks plan must record completed verification", failures)
+    detector_timeout_statuses = re.findall(r"^status: .+$", detector_timeout_plan, flags=re.MULTILINE)
+    detector_timeout_sections = detector_timeout_plan.split("## Verification Completed\n", 1)
+    detector_timeout_verification = detector_timeout_sections[1] if len(detector_timeout_sections) == 2 else ""
+    detector_timeout_required = (
+        "All four Make gates",
+        "external-directory Make gate",
+        "Seven isolated timeout",
+        "direct controller timer targeting",
+        "teardown invalidation",
+        "plan-evidence mutation",
+    )
+    require(detector_timeout_statuses == ["status: completed"] and
+            all(item in detector_timeout_verification for item in detector_timeout_required) and
+            re.search(r"\b(?:pending|todo|tbd|not run)\b", detector_timeout_verification, re.IGNORECASE) is None,
+            "detector completion timeout plan must record completed verification",
+            failures)
+    stale_callback_statuses = re.findall(
+        r"^status: .+$", stale_callback_plan, flags=re.MULTILINE
+    )
+    stale_callback_sections = stale_callback_plan.split("## Verification Completed\n", 1)
+    stale_callback_verification = (
+        stale_callback_sections[1] if len(stale_callback_sections) == 2 else ""
+    )
+    stale_callback_required_evidence = (
+        "All four Make gates",
+        "Pull-request run `27394392145`",
+        "push run `27394408704`",
+        "CodeQL setup run `27402322743`",
+        "Mutations removing either the generation comparison",
+    )
+    require(stale_callback_statuses == ["status: completed"]
+            and all(item in stale_callback_verification for item in stale_callback_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", stale_callback_verification, re.IGNORECASE) is None,
+            "stale detector callback plan must record completed status and actual verification",
             failures)
     require("permissions:\n  contents: read" in workflow and
             "cancel-in-progress: true" in workflow and
@@ -331,6 +520,14 @@ def main():
             "persist-credentials: false" in workflow and
             "run: make check" in workflow,
             "GitHub Actions must keep the bounded, least-privilege macOS project check",
+            failures)
+    require("on:\n  push:\n  pull_request:" in workflow and
+            "branches:" not in workflow,
+            "GitHub Actions must run the canonical check for every push and pull request",
+            failures)
+    require("2026-06-17-all-push-checks.md" in readme and
+            "every branch push and pull request" in readme,
+            "README must document all-push and pull-request hosted validation",
             failures)
     action_uses = re.findall(r"^\s*uses:\s*(\S+)\s*$", workflow, re.MULTILINE)
     require(action_uses == ["actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"],

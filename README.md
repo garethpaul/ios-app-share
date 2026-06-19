@@ -87,6 +87,17 @@ explicit detector lifetime does not create a retain cycle if the dependency
 never completes.
 Each scan carries a generation token, so a stale callback from an earlier retry
 or a duplicate terminal callback cannot overwrite the active detector state.
+A detector construction failure enters the same generation-scoped retry state
+before callback registration, avoiding a nil dereference or stuck progress UI.
+Each constructed detector also receives a completion timeout. If the retired
+dependency never reports success or failure, the active generation returns to
+the existing retry state, releases the detector, and ignores any late callback.
+Timeout delivery uses a weak timer target and the controller invalidates the
+active timeout during teardown, so bounded recovery does not become a controller
+lifecycle retain path.
+Both AppShare target configurations use the repository-relative bridging header
+at `AppShare/Bridge-Header.h`, so checkouts do not depend on a developer home
+directory.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -108,6 +119,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 ## Maintenance Notes
 
+- Every Make verification target derives the checkout root from the loaded
+  Makefile, so an absolute Makefile path works from any working directory.
 - See `docs/plans/2026-06-10-hosted-project-validation.md` for the hosted Xcode
   project parsing boundary.
 - This looks like an Apple platform project or sample. Xcode, Swift, CocoaPods, and deployment target versions may need to match the original project era.
@@ -127,9 +140,13 @@ When the required SDK or runtime is unavailable, use static checks and source re
   callback ownership guardrail.
 - See `docs/plans/2026-06-12-stale-detector-callback-guard.md` for stale callback
   and duplicate terminal-result handling.
+- See `docs/plans/2026-06-13-relative-bridging-header.md` for checkout-independent
+  Objective-C bridge configuration.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions static
   baseline.
+- See `docs/plans/2026-06-17-all-push-checks.md` for canonical hosted checks on
+  every branch push and pull request.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
 ## Contributing

@@ -38,6 +38,15 @@ Helpful reports include:
   stalled dependency cannot leave the view controller in a retain cycle.
 - Scan generations reject a stale callback from an earlier retry or a duplicate
   terminal result before it can release the active detector or change UI.
+- A completion timeout releases a detector that never reports a terminal result
+  through generation-scoped retry state, so any late callback cannot overwrite
+  a newer scan.
+- Timeout delivery must use a weak target and teardown invalidation so stalled
+  detection recovery does not retain the view controller lifecycle.
+- A detector construction failure must enter the existing local retry state
+  before detector retention or callback registration.
+- The AppShare target must use the repository-relative bridging header rather
+  than a developer home path that can resolve unintended machine-local files.
 - GitHub Actions runs only the local-only `make check` baseline and Xcode
   project parsing. Do not add live device collection, deployment, or
   credentialed service steps without a separate privacy and security review.

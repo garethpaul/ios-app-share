@@ -8,6 +8,19 @@
 
 import UIKit
 
+private final class WeakTimerTarget: NSObject {
+    private weak var viewController: ViewController?
+
+    init(viewController: ViewController) {
+        self.viewController = viewController
+        super.init()
+    }
+
+    func timerFired(timer: NSTimer) {
+        self.viewController?.detectionTimedOut(timer)
+    }
+}
+
 class ViewController: UIViewController {
 
     private let detectButton = UIButton(type: UIButtonType.System)
@@ -15,6 +28,13 @@ class ViewController: UIViewController {
     private var detectionCompleted = false
     private var detectionGeneration = 0
     private var appDetector: iHasApp?
+    private let detectionTimeoutInterval: NSTimeInterval = 30.0
+    private var detectionTimeoutTimer: NSTimer?
+    private lazy var detectionTimeoutTarget = WeakTimerTarget(viewController: self)
+
+    deinit {
+        self.detectionTimeoutTimer?.invalidate()
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -63,6 +83,8 @@ class ViewController: UIViewController {
             return
         }
 
+        self.detectionTimeoutTimer?.invalidate()
+        self.detectionTimeoutTimer = nil
         self.appDetector = nil
         self.detectionInProgress = false
 
@@ -86,6 +108,21 @@ class ViewController: UIViewController {
         }
     }
 
+    private func scheduleDetectionTimeout(generation: Int) {
+        self.detectionTimeoutTimer = NSTimer.scheduledTimerWithTimeInterval(
+            self.detectionTimeoutInterval,
+            target: self.detectionTimeoutTarget,
+            selector: "timerFired:",
+            userInfo: NSNumber(integer: generation),
+            repeats: false)
+    }
+
+    func detectionTimedOut(timer: NSTimer) {
+        if let generation = timer.userInfo as? NSNumber {
+            self.finishDetection(generation.integerValue, succeeded: false)
+        }
+    }
+
     @IBAction func detectInstalledApps(sender: AnyObject) {
         if self.detectionInProgress || self.detectionCompleted {
             return
@@ -101,7 +138,12 @@ class ViewController: UIViewController {
             hint: "Detection is running locally without sending results",
             announce: true)
         let detect = iHasApp.new()
+        if detect == nil {
+            self.finishDetection(detectionGeneration, succeeded: false)
+            return
+        }
         self.appDetector = detect
+        self.scheduleDetectionTimeout(detectionGeneration)
         detect.detectAppDictionariesWithIncremental({ (_: [AnyObject]!) -> Void in
             // Detected app data stays local to this sample.
         }, withSuccess: { [weak self] (_: [AnyObject]!) -> Void in

@@ -1,5 +1,28 @@
 # Changes
 
+## 2026-06-18
+
+- Added a generation-owned detector completion timeout so a missing terminal
+  callback returns the local UI to retry state, releases the detector, and
+  leaves any late callback unable to overwrite newer work.
+- Routed timeout delivery through a weak timer target and invalidated the active
+  timer during controller teardown so timeout recovery does not retain the
+  controller lifecycle.
+
+## 2026-06-17
+
+- Extended the pinned, read-only hosted baseline from default-branch pushes to
+  every branch push while preserving pull-request validation.
+
+## 2026-06-13
+
+- Made every Make verification target derive the checkout root so the static
+  app-detection baseline works from external directories.
+- Routed detector construction failure through the generation-scoped retry
+  state before retention or callback registration.
+- Replaced both machine-local AppShare target bridge paths with the
+  repository-relative bridging header at `AppShare/Bridge-Header.h`.
+
 ## 2026-06-10
 
 - Added pinned, least-privilege macOS GitHub Actions validation for the
