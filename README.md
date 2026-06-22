@@ -5,7 +5,14 @@
 
 ## Overview
 
-`garethpaul/ios-app-share` is a Apple platform application or Swift sample. iOS App Share
+`garethpaul/ios-app-share` is a historical Swift iOS installed-app detection
+sample. The Xcode project contains an application target and a unit-test target;
+despite the repository name, it does not contain an iOS Share Extension.
+
+The sample is preserved for source review rather than as a supported current-iOS
+application. Its pinned `iHasApp` 2.2.0 dependency is archived and relies on
+broad `canOpenURL:` probing that is no longer a viable detection model under
+current Apple platform and App Store restrictions.
 
 This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Swift (3), C/C++ headers (1).
 
@@ -54,9 +61,19 @@ Run `pod install` only from a compatible CocoaPods environment when you intentio
 
 ## Running or Using the Project
 
-- Open `AppShare.xcworkspace` in Xcode so the app and CocoaPods projects are loaded together.
-- Tap the detection button in the sample app to inspect `iHasApp` behavior locally.
-- Do not upload, persist, or log detected installed-app data without a dedicated privacy design and user consent.
+- `AppShare.xcworkspace` records the historical app and CocoaPods project
+  relationship, but opening it does not imply that the Swift 1-era source or
+  retired dependency builds or runs with a current toolchain.
+- Do not treat the detection button as a supported current-iOS capability.
+  `iHasApp` scans a broad dictionary of third-party URL schemes with
+  `canOpenURL:`. Current builds must declare queried schemes, and apps linked on
+  or after iOS 15 are limited to 50 declarations, so this broad probing model is
+  nonviable rather than something to restore with a scheme allow-list.
+- The first-party Swift flow keeps results local-only and does not persist, log,
+  or upload them. However, the selected `iHasApp` dictionary API reports
+  detected App Store identifiers to `http://itunes.apple.com/lookup` over
+  cleartext HTTP. Installed-app results are sensitive device metadata; do not
+  use this sample as a privacy-safe implementation.
 
 ## Testing and Verification
 
@@ -74,8 +91,19 @@ on hosts without the legacy Xcode toolchain, so the standard local gate commands
 stay available while preserving the single source of truth.
 GitHub Actions runs the same baseline on macOS and requires current Xcode to
 parse `AppShare.xcodeproj` without selecting a simulator.
+The hosted `check` job and repository CodeQL analysis do not install CocoaPods,
+compile the Swift application, build either Xcode target, or run XCTest. A green
+hosted result therefore verifies the static repository contracts only and does
+not imply current runtime support.
 
-The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source inventory, and guards against automatic startup detection, duplicate scans, missing in-progress detection UI state, missing completed state button disabling, missing accessibility text for the local-only detection action, callback UI updates that skip the main queue, logging, or network/upload handling for local-only installed-app detection results.
+The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace
+XML, checks CocoaPods lockfile and Xcode metadata, verifies the Swift source
+inventory, and guards the first-party UI against automatic startup detection,
+duplicate scans, missing in-progress detection UI state, missing completed state
+button disabling, missing accessibility text for the local-only detection
+action, callback UI updates that skip the main queue, logging, or added
+network/upload handling. These static checks do not inspect the resolved
+CocoaPod's own network behavior.
 It also checks state-specific accessibility text for the running, completed,
 and retry states of the installed-app detection button.
 Accessibility announcements are posted for those user-triggered state changes
@@ -111,9 +139,14 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include AppShare/Info.plist, AppShareTests/Info.plist.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include AppShare/Info.plist, AppShareTests/Info.plist.
-- Installed-app detection is sensitive device metadata. Keep the sample local-only and user-triggered, avoid debug logging of detection results or counts, and document any future data flow before adding storage or transmission.
-- Keep the detection button accessibility text aligned with the local-only
-  privacy boundary.
+- Installed-app detection is sensitive device metadata. The first-party UI is
+  user-triggered and handles results local-only, but `iHasApp` 2.2.0's
+  dictionary lookup transmits detected App Store identifiers over cleartext
+  HTTP. Do not describe the complete dependency path as local-only or reuse it
+  without a new privacy and platform design.
+- Keep the detection button accessibility text aligned with the first-party
+  UI's local result handling without implying that the dependency path is
+  local-only.
 - Keep accessibility announcements aligned with user-triggered detection state
   changes.
 
