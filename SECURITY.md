@@ -43,6 +43,9 @@ Helpful reports include:
   a newer scan.
 - Timeout delivery must use a weak target and teardown invalidation so stalled
   detection recovery does not retain the view controller lifecycle.
+- App deactivation routes active detection through the generation-guarded retry
+  state, invalidating its timer and releasing detector ownership without an
+  off-screen accessibility announcement; late callbacks remain inert.
 - A detector construction failure must enter the existing local retry state
   before detector retention or callback registration.
 - The AppShare target must use the repository-relative bridging header rather

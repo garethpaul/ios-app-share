@@ -1,5 +1,54 @@
 # Changes
 
+## 2026-06-25 05:36 - P1 - Release detection when the app becomes inactive
+
+### Summary
+Routed in-progress installed-app detection through generation-guarded retry
+cleanup when UIKit moves the app out of the active state.
+
+### Work completed
+- Added an app-deactivation cleanup entry point on the view controller.
+- Reused terminal cleanup while suppressing off-screen accessibility output.
+- Wired `applicationWillResignActive` to release timeout and detector ownership.
+
+### Threads
+- Started: none — work completed directly in the current repository.
+- Continued: none.
+- Stopped: none.
+
+### Files changed
+- `AppShare/ViewController.swift` — added announcement-aware lifecycle cleanup.
+- `AppShare/AppDelegate.swift` — invoked cleanup before app deactivation.
+- `scripts/check-baseline.py` — enforced lifecycle routing and plan evidence.
+- Documentation and plan files — recorded privacy behavior and validation.
+
+### Validation
+- `python3 scripts/check-baseline.py` — failed on the missing inactive-app
+  lifecycle contract before implementation and passed afterward.
+- `/usr/bin/make check` — passed the complete static privacy and project gate.
+- Two isolated hostile mutations removing delegate routing or announcement
+  suppression were rejected.
+- Codex review found that commented-out delegate routing could satisfy the raw
+  source contract; the checker now strips Swift line and nested block comments
+  without truncating comment markers inside string literals before extracting
+  lifecycle methods, and both hostile mutations are rejected.
+- Python compilation and `git diff --check` — passed.
+- Hosted static and CodeQL checks — pending PR verification.
+
+### Bugs / findings
+- P1: a user-triggered detector, timeout, and callback ownership could remain
+  active after the app resigned active, conflicting with the no-background-
+  inventory privacy boundary.
+- P2: the first lifecycle contract inspected raw delegate source, so a required
+  cleanup call copied into a line comment could produce a false pass.
+
+### Blockers
+- The pinned Swift 1-era project and retired CocoaPod are source-review only;
+  current Xcode does not compile or execute the placeholder XCTest target.
+
+### Next action
+- Rerun Codex and hosted review on PR #11 before merge.
+
 ## 2026-06-18
 
 - Added a generation-owned detector completion timeout so a missing terminal

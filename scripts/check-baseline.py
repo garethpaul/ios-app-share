@@ -28,6 +28,7 @@ DETECTOR_CONSTRUCTION_PLAN = ROOT / "docs/plans/2026-06-13-detector-construction
 LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
 ALL_PUSH_CHECKS_PLAN = ROOT / "docs/plans/2026-06-17-all-push-checks.md"
 DETECTOR_TIMEOUT_PLAN = ROOT / "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md"
+INACTIVE_DETECTION_PLAN = ROOT / "docs/plans/2026-06-25-release-detection-on-inactive.md"
 
 
 def require(condition, message, failures):
@@ -39,8 +40,63 @@ def read(relative_path):
     return (ROOT / relative_path).read_text(encoding="utf-8", errors="replace")
 
 
-def strip_swift_line_comments(text):
-    return "\n".join(line.split("//", 1)[0] for line in text.splitlines())
+def strip_swift_comments(text):
+    result = []
+    index = 0
+    block_depth = 0
+    in_string = False
+    escaped = False
+
+    while index < len(text):
+        character = text[index]
+        next_character = text[index + 1] if index + 1 < len(text) else ""
+
+        if block_depth:
+            if character == "/" and next_character == "*":
+                block_depth += 1
+                index += 2
+                continue
+            if character == "*" and next_character == "/":
+                block_depth -= 1
+                index += 2
+                continue
+            if character == "\n":
+                result.append(character)
+            index += 1
+            continue
+
+        if in_string:
+            result.append(character)
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            index += 1
+            continue
+
+        if character == '"':
+            in_string = True
+            result.append(character)
+            index += 1
+            continue
+        if character == "/" and next_character == "/":
+            newline = text.find("\n", index + 2)
+            if newline == -1:
+                break
+            result.append("\n")
+            index = newline + 1
+            continue
+        if character == "/" and next_character == "*":
+            block_depth = 1
+            index += 2
+            continue
+
+        result.append(character)
+        index += 1
+
+    return "".join(result)
 
 
 def swift_function_body(text, signature):
@@ -120,6 +176,7 @@ def main():
         "docs/plans/2026-06-13-location-independent-make.md",
         "docs/plans/2026-06-17-all-push-checks.md",
         "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md",
+        "docs/plans/2026-06-25-release-detection-on-inactive.md",
         "docs/readme-overview.svg",
     ]
 
@@ -142,8 +199,10 @@ def main():
     workspace = read("AppShare.xcworkspace/contents.xcworkspacedata")
     project = read("AppShare.xcodeproj/project.pbxproj")
     bridge = read("AppShare/Bridge-Header.h")
+    app_delegate = read("AppShare/AppDelegate.swift")
+    active_app_delegate = strip_swift_comments(app_delegate)
     view_controller = read("AppShare/ViewController.swift")
-    active_view_controller = strip_swift_line_comments(view_controller)
+    active_view_controller = strip_swift_comments(view_controller)
     readme = read("README.md")
     vision = read("VISION.md")
     security = read("SECURITY.md")
@@ -169,10 +228,13 @@ def main():
     location_independent_make_plan = LOCATION_INDEPENDENT_MAKE_PLAN.read_text(encoding="utf-8") if LOCATION_INDEPENDENT_MAKE_PLAN.exists() else ""
     all_push_checks_plan = ALL_PUSH_CHECKS_PLAN.read_text(encoding="utf-8") if ALL_PUSH_CHECKS_PLAN.exists() else ""
     detector_timeout_plan = DETECTOR_TIMEOUT_PLAN.read_text(encoding="utf-8") if DETECTOR_TIMEOUT_PLAN.exists() else ""
+    inactive_detection_plan = INACTIVE_DETECTION_PLAN.read_text(encoding="utf-8") if INACTIVE_DETECTION_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
     terminal_state = swift_function_body(active_view_controller, "private func finishDetection")
+    inactive_cancellation = swift_function_body(active_view_controller, "func cancelDetectionForInactiveApp")
+    will_resign_active = swift_function_body(active_app_delegate, "func applicationWillResignActive")
     timeout_scheduler = swift_function_body(active_view_controller, "private func scheduleDetectionTimeout")
     timeout_handler = swift_function_body(active_view_controller, "func detectionTimedOut")
     deinit_body = swift_function_body(active_view_controller, "deinit")
@@ -223,7 +285,9 @@ def main():
             "UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, label)" in active_view_controller,
             "ViewController must announce detection state changes to assistive technologies",
             failures)
-    require(active_view_controller.count("announce: true") >= 3 and "announce: false" in active_view_controller,
+    require(active_view_controller.count("announce: true") >= 1 and
+            active_view_controller.count("announce: announce") == 2 and
+            "announce: false" in active_view_controller,
             "ViewController must announce running, completed, and retry detection states only after user-triggered changes",
             failures)
     for accessibility_text in [
@@ -324,6 +388,13 @@ def main():
             "!self.detectionInProgress" in terminal_state and
             "return" in terminal_state,
             "Terminal callbacks must ignore stale generations and duplicate results",
+            failures)
+    require("announce: Bool = true" in active_view_controller and
+            terminal_state.count("announce: announce") == 2 and
+            inactive_cancellation.count("self.finishDetection(self.detectionGeneration, succeeded: false, announce: false)") == 1 and
+            "self.window?.rootViewController as? ViewController" in will_resign_active and
+            "viewController.cancelDetectionForInactiveApp()" in will_resign_active,
+            "App deactivation must release active detector state through the generation-guarded retry path without announcing off-screen",
             failures)
     require(not re.search(r"\b(?:print|println|NSLog)\s*\(", active_view_controller),
             "Detection callback must not log installed-app data or counts",
@@ -492,6 +563,12 @@ def main():
             all(item in detector_timeout_verification for item in detector_timeout_required) and
             re.search(r"\b(?:pending|todo|tbd|not run)\b", detector_timeout_verification, re.IGNORECASE) is None,
             "detector completion timeout plan must record completed verification",
+            failures)
+    require("status: completed" in inactive_detection_plan and
+            "applicationWillResignActive" in inactive_detection_plan and
+            "cancelDetectionForInactiveApp" in inactive_detection_plan and
+            "hostile mutations" in inactive_detection_plan.lower(),
+            "inactive-app detector cleanup plan must record completed lifecycle verification",
             failures)
     stale_callback_statuses = re.findall(
         r"^status: .+$", stale_callback_plan, flags=re.MULTILINE
