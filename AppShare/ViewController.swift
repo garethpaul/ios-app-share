@@ -78,7 +78,7 @@ class ViewController: UIViewController {
         }
     }
 
-    private func finishDetection(generation: Int, succeeded: Bool) {
+    private func finishDetection(generation: Int, succeeded: Bool, announce: Bool = true) {
         if generation != self.detectionGeneration || !self.detectionInProgress {
             return
         }
@@ -95,7 +95,7 @@ class ViewController: UIViewController {
             self.updateDetectButtonAccessibility(
                 "Installed App Detection Complete",
                 hint: "Detection completed locally and the button is disabled",
-                announce: true)
+                announce: announce)
         }
         else {
             self.detectionCompleted = false
@@ -104,8 +104,12 @@ class ViewController: UIViewController {
             self.updateDetectButtonAccessibility(
                 "Try App Detection Again",
                 hint: "Previous local detection failed; double tap to retry",
-                announce: true)
+                announce: announce)
         }
+    }
+
+    func cancelDetectionForInactiveApp() {
+        self.finishDetection(self.detectionGeneration, succeeded: false, announce: false)
     }
 
     private func scheduleDetectionTimeout(generation: Int) {

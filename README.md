@@ -123,6 +123,10 @@ the existing retry state, releases the detector, and ignores any late callback.
 Timeout delivery uses a weak timer target and the controller invalidates the
 active timeout during teardown, so bounded recovery does not become a controller
 lifecycle retain path.
+When the app resigns active, the app delegate routes any in-progress scan through
+the same generation-guarded retry cleanup. This invalidates the timeout,
+releases the retained detector, suppresses off-screen accessibility announcements,
+and leaves late callbacks unable to mutate state.
 Both AppShare target configurations use the repository-relative bridging header
 at `AppShare/Bridge-Header.h`, so checkouts do not depend on a developer home
 directory.
@@ -180,6 +184,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   baseline.
 - See `docs/plans/2026-06-17-all-push-checks.md` for canonical hosted checks on
   every branch push and pull request.
+- See `docs/plans/2026-06-25-release-detection-on-inactive.md` for inactive-app
+  detector release and late-callback rejection.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
 ## Contributing
