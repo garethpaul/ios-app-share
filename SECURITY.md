@@ -46,6 +46,8 @@ Helpful reports include:
 - App deactivation routes active detection through the generation-guarded retry
   state, invalidating its timer and releasing detector ownership without an
   off-screen accessibility announcement; late callbacks remain inert.
+- View disappearance uses the same silent generation-guarded retry state so
+  sensitive detector and timeout ownership do not outlive the visible screen.
 - A detector construction failure must enter the existing local retry state
   before detector retention or callback registration.
 - The AppShare target must use the repository-relative bridging header rather

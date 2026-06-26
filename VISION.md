@@ -82,6 +82,8 @@ invalidate the active timer so lifecycle cleanup does not depend on the timeout
 firing.
 The inactive app lifecycle should use the same generation-guarded retry cleanup
 so installed-app detection state is not retained across deactivation.
+View disappearance should use that silent cleanup before the screen leaves the
+hierarchy so detector ownership remains bounded to visible user interaction.
 The repository-relative bridging header should keep Objective-C dependency
 resolution independent of the original developer's checkout path.
 
