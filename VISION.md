@@ -33,6 +33,7 @@ Priority:
   retry state and ignores any late callback
 - Release active detector and timeout ownership when the app resigns active,
   without announcing state changes off-screen
+- Release temporary detector ownership when UIKit reports memory pressure
 - Route detector construction failure through generation-scoped retry state
 - Keep a repository-relative bridging header in every AppShare configuration
 
@@ -82,6 +83,8 @@ The inactive app lifecycle should use the same generation-guarded retry cleanup
 so installed-app detection state is not retained across deactivation.
 View disappearance should use that silent cleanup before the screen leaves the
 hierarchy so detector ownership remains bounded to visible user interaction.
+Memory warnings should use the same silent cleanup after `super` so temporary
+detector and timeout ownership are released under system pressure.
 The repository-relative bridging header should keep Objective-C dependency
 resolution independent of the original developer's checkout path.
 

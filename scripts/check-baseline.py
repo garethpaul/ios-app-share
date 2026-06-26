@@ -30,6 +30,7 @@ ALL_PUSH_CHECKS_PLAN = ROOT / "docs/plans/2026-06-17-all-push-checks.md"
 DETECTOR_TIMEOUT_PLAN = ROOT / "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md"
 INACTIVE_DETECTION_PLAN = ROOT / "docs/plans/2026-06-25-release-detection-on-inactive.md"
 HIDDEN_VIEW_DETECTION_PLAN = ROOT / "docs/plans/2026-06-26-release-detection-on-view-hide.md"
+MEMORY_WARNING_DETECTION_PLAN = ROOT / "docs/plans/2026-06-26-release-detection-on-memory-warning.md"
 ROADMAP_RECONCILIATION_PLAN = ROOT / "docs/plans/2026-06-26-platform-callback-roadmap-reconciliation.md"
 
 
@@ -180,6 +181,7 @@ def main():
         "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md",
         "docs/plans/2026-06-25-release-detection-on-inactive.md",
         "docs/plans/2026-06-26-release-detection-on-view-hide.md",
+        "docs/plans/2026-06-26-release-detection-on-memory-warning.md",
         "docs/plans/2026-06-26-platform-callback-roadmap-reconciliation.md",
         "docs/readme-overview.svg",
     ]
@@ -234,10 +236,12 @@ def main():
     detector_timeout_plan = DETECTOR_TIMEOUT_PLAN.read_text(encoding="utf-8") if DETECTOR_TIMEOUT_PLAN.exists() else ""
     inactive_detection_plan = INACTIVE_DETECTION_PLAN.read_text(encoding="utf-8") if INACTIVE_DETECTION_PLAN.exists() else ""
     hidden_view_detection_plan = HIDDEN_VIEW_DETECTION_PLAN.read_text(encoding="utf-8") if HIDDEN_VIEW_DETECTION_PLAN.exists() else ""
+    memory_warning_detection_plan = MEMORY_WARNING_DETECTION_PLAN.read_text(encoding="utf-8") if MEMORY_WARNING_DETECTION_PLAN.exists() else ""
     roadmap_reconciliation_plan = ROADMAP_RECONCILIATION_PLAN.read_text(encoding="utf-8") if ROADMAP_RECONCILIATION_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     view_will_disappear = swift_function_body(active_view_controller, "override func viewWillDisappear")
+    memory_warning = swift_function_body(active_view_controller, "override func didReceiveMemoryWarning")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
     terminal_state = swift_function_body(active_view_controller, "private func finishDetection")
     inactive_cancellation = swift_function_body(active_view_controller, "func cancelDetectionForInactiveApp")
@@ -408,6 +412,12 @@ def main():
             view_will_disappear.find("super.viewWillDisappear(animated)") <
             view_will_disappear.find("self.cancelDetectionForInactiveApp()"),
             "View disappearance must release active detector state silently after calling super",
+            failures)
+    require("super.didReceiveMemoryWarning()" in memory_warning and
+            "self.cancelDetectionForInactiveApp()" in memory_warning and
+            memory_warning.find("super.didReceiveMemoryWarning()") <
+            memory_warning.find("self.cancelDetectionForInactiveApp()"),
+            "Memory warnings must release active detector state silently after calling super",
             failures)
     require(not re.search(r"\b(?:print|println|NSLog)\s*\(", active_view_controller),
             "Detection callback must not log installed-app data or counts",
@@ -616,6 +626,12 @@ def main():
             "cancelDetectionForInactiveApp" in hidden_view_detection_plan and
             "hostile mutations" in hidden_view_detection_plan.lower(),
             "hidden-view detector cleanup plan must record completed lifecycle verification",
+            failures)
+    require("status: completed" in memory_warning_detection_plan and
+            "didReceiveMemoryWarning" in memory_warning_detection_plan and
+            "cancelDetectionForInactiveApp" in memory_warning_detection_plan and
+            "hostile mutations" in memory_warning_detection_plan.lower(),
+            "memory-warning detector cleanup plan must record completed lifecycle verification",
             failures)
     require("status: completed" in roadmap_reconciliation_plan and
             "Historical Platform And Callback Evidence" in roadmap_reconciliation_plan and

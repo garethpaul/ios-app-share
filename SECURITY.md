@@ -48,6 +48,8 @@ Helpful reports include:
   off-screen accessibility announcement; late callbacks remain inert.
 - View disappearance uses the same silent generation-guarded retry state so
   sensitive detector and timeout ownership do not outlive the visible screen.
+- Memory warnings use that cleanup after calling UIKit `super`, releasing
+  temporary detector ownership while keeping late callbacks inert.
 - A detector construction failure must enter the existing local retry state
   before detector retention or callback registration.
 - The AppShare target must use the repository-relative bridging header rather
