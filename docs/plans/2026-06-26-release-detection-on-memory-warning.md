@@ -40,10 +40,12 @@ completed implementation passed every Make alias from the checkout, the
 absolute-Makefile gate from `/tmp`, Python compilation, and `git diff --check`.
 Hostile mutations removing cleanup, reversing `super` ordering, and commenting
 out cleanup all failed closed.
-Hosted static checks and CodeQL Actions/Python passed. `$codex-review` stopped
-before analysis with OpenAI HTTP 401 authentication failure; immutable manual
-review of exact head `d9cbb22be847bdb61f54b39bce6dc9f103e96f1a` found no
-actionable issue.
+Hosted static checks and CodeQL Actions/Python passed before and after rebasing
+onto the concurrent roadmap documentation change. `$codex-review` stopped before
+analysis with OpenAI HTTP 401 authentication failure; immutable manual review of
+post-rebase exact head `c22234f0a63c041133c74c06cf162e6a86ce1acb` found no
+actionable issue. That head merged to master as
+`9bf00b67e2a43344642cc9e688abb1ef754689ff`.
 
 ## Scope Boundaries
 

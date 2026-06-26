@@ -23,8 +23,11 @@ retry cleanup so temporary detector and timeout ownership are released.
   out cleanup all failed closed.
 - Python compilation and `git diff --check` passed.
 - Hosted static checks and CodeQL Actions/Python passed.
-- Immutable manual review of exact head
-  `d9cbb22be847bdb61f54b39bce6dc9f103e96f1a` found no actionable issue.
+- The post-rebase exact head
+  `c22234f0a63c041133c74c06cf162e6a86ce1acb` passed duplicate hosted static
+  checks and CodeQL Actions/Python.
+- Immutable manual review found no actionable issue, and that head merged as
+  `9bf00b67e2a43344642cc9e688abb1ef754689ff`.
 
 ### Bugs / findings
 
@@ -41,8 +44,7 @@ retry cleanup so temporary detector and timeout ownership are released.
 
 ### Next action
 
-- Re-run exact-head checks after this evidence-only amendment and merge only the
-  fully green reviewed head.
+- Continue repository maintenance from the merged, fully green master head.
 
 ## 2026-06-26 02:38 PDT - P2 - Reconcile platform and callback roadmap
 
