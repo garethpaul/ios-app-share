@@ -38,9 +38,7 @@ Priority:
 
 Next priorities:
 
-- Document iOS version limitations around installed-app detection
 - Modernize Swift and dependency usage in a dedicated pass
-- Add tests or manual checks around success and failure callbacks
 
 Contribution rules:
 
