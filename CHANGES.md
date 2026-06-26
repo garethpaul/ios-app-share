@@ -1,5 +1,33 @@
 # Changes
 
+## 2026-06-26 - P1 - Release detection when the view hides
+
+### Summary
+Routed in-progress installed-app detection through silent generation-guarded
+retry cleanup before the detector screen leaves the view hierarchy.
+
+### Work completed
+- Added `viewWillDisappear` cleanup after the required UIKit `super` call.
+- Reused inactive-app cleanup to invalidate the timeout, release detector
+  ownership, restore retry state, and suppress off-screen announcements.
+- Added comment-stripped source and plan contracts for the visibility boundary.
+
+### Validation
+- The new baseline contract failed before implementation on the missing view
+  lifecycle override.
+- Local and hosted evidence is recorded in the completed plan.
+
+### Bugs / findings
+- P1: an active installed-app scan could retain detector and timeout ownership
+  after its screen left the hierarchy while the app remained active.
+
+### Blockers
+- Current Xcode compilation is not claimed for this Swift 1-era source-review
+  sample.
+
+### Next action
+- Merge only after exact-head review and hosted checks pass.
+
 ## 2026-06-25 05:36 - P1 - Release detection when the app becomes inactive
 
 ### Summary

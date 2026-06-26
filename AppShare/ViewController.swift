@@ -41,6 +41,11 @@ class ViewController: UIViewController {
         self.configureDetectButton()
     }
 
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.cancelDetectionForInactiveApp()
+    }
+
     private func configureDetectButton() {
         self.detectButton.setTitle("Detect Installed Apps", forState: UIControlState.Normal)
         self.updateDetectButtonAccessibility(

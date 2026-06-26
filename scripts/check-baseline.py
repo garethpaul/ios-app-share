@@ -29,6 +29,7 @@ LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independ
 ALL_PUSH_CHECKS_PLAN = ROOT / "docs/plans/2026-06-17-all-push-checks.md"
 DETECTOR_TIMEOUT_PLAN = ROOT / "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md"
 INACTIVE_DETECTION_PLAN = ROOT / "docs/plans/2026-06-25-release-detection-on-inactive.md"
+HIDDEN_VIEW_DETECTION_PLAN = ROOT / "docs/plans/2026-06-26-release-detection-on-view-hide.md"
 
 
 def require(condition, message, failures):
@@ -177,6 +178,7 @@ def main():
         "docs/plans/2026-06-17-all-push-checks.md",
         "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md",
         "docs/plans/2026-06-25-release-detection-on-inactive.md",
+        "docs/plans/2026-06-26-release-detection-on-view-hide.md",
         "docs/readme-overview.svg",
     ]
 
@@ -229,8 +231,10 @@ def main():
     all_push_checks_plan = ALL_PUSH_CHECKS_PLAN.read_text(encoding="utf-8") if ALL_PUSH_CHECKS_PLAN.exists() else ""
     detector_timeout_plan = DETECTOR_TIMEOUT_PLAN.read_text(encoding="utf-8") if DETECTOR_TIMEOUT_PLAN.exists() else ""
     inactive_detection_plan = INACTIVE_DETECTION_PLAN.read_text(encoding="utf-8") if INACTIVE_DETECTION_PLAN.exists() else ""
+    hidden_view_detection_plan = HIDDEN_VIEW_DETECTION_PLAN.read_text(encoding="utf-8") if HIDDEN_VIEW_DETECTION_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
+    view_will_disappear = swift_function_body(active_view_controller, "override func viewWillDisappear")
     detection_action = swift_function_body(active_view_controller, "func detectInstalledApps")
     terminal_state = swift_function_body(active_view_controller, "private func finishDetection")
     inactive_cancellation = swift_function_body(active_view_controller, "func cancelDetectionForInactiveApp")
@@ -395,6 +399,12 @@ def main():
             "self.window?.rootViewController as? ViewController" in will_resign_active and
             "viewController.cancelDetectionForInactiveApp()" in will_resign_active,
             "App deactivation must release active detector state through the generation-guarded retry path without announcing off-screen",
+            failures)
+    require("super.viewWillDisappear(animated)" in view_will_disappear and
+            "self.cancelDetectionForInactiveApp()" in view_will_disappear and
+            view_will_disappear.find("super.viewWillDisappear(animated)") <
+            view_will_disappear.find("self.cancelDetectionForInactiveApp()"),
+            "View disappearance must release active detector state silently after calling super",
             failures)
     require(not re.search(r"\b(?:print|println|NSLog)\s*\(", active_view_controller),
             "Detection callback must not log installed-app data or counts",
@@ -569,6 +579,12 @@ def main():
             "cancelDetectionForInactiveApp" in inactive_detection_plan and
             "hostile mutations" in inactive_detection_plan.lower(),
             "inactive-app detector cleanup plan must record completed lifecycle verification",
+            failures)
+    require("status: completed" in hidden_view_detection_plan and
+            "viewWillDisappear" in hidden_view_detection_plan and
+            "cancelDetectionForInactiveApp" in hidden_view_detection_plan and
+            "hostile mutations" in hidden_view_detection_plan.lower(),
+            "hidden-view detector cleanup plan must record completed lifecycle verification",
             failures)
     stale_callback_statuses = re.findall(
         r"^status: .+$", stale_callback_plan, flags=re.MULTILINE

@@ -127,6 +127,8 @@ When the app resigns active, the app delegate routes any in-progress scan throug
 the same generation-guarded retry cleanup. This invalidates the timeout,
 releases the retained detector, suppresses off-screen accessibility announcements,
 and leaves late callbacks unable to mutate state.
+The view controller applies the same silent cleanup before its view leaves the
+hierarchy, so detector and timeout ownership do not outlive the visible screen.
 Both AppShare target configurations use the repository-relative bridging header
 at `AppShare/Bridge-Header.h`, so checkouts do not depend on a developer home
 directory.
@@ -186,6 +188,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   every branch push and pull request.
 - See `docs/plans/2026-06-25-release-detection-on-inactive.md` for inactive-app
   detector release and late-callback rejection.
+- See `docs/plans/2026-06-26-release-detection-on-view-hide.md` for visible-screen
+  detector ownership and silent retry cleanup.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to Swift sources, plist/storyboard files, CocoaPods metadata, app-detection behavior, or privacy documentation.
 
 ## Contributing
