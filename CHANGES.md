@@ -1,5 +1,49 @@
 # Changes
 
+## 2026-06-26 14:43 PDT - P2 - Release detection on memory warning
+
+### Summary
+
+Routed UIKit memory warnings through the existing silent, generation-guarded
+retry cleanup so temporary detector and timeout ownership are released.
+
+### Work completed
+
+- Kept `super.didReceiveMemoryWarning()` first and reused terminal cleanup.
+- Preserved stale-callback rejection and suppressed lifecycle-driven
+  accessibility announcements.
+- Added comment-resistant source and completed-plan contracts.
+
+### Validation
+
+- Red-first baseline failed on the missing cleanup and incomplete plan.
+- Every Make alias passed from the checkout, and `make check` passed through the
+  absolute Makefile path from `/tmp`.
+- Hostile mutations removing cleanup, reversing `super` ordering, and commenting
+  out cleanup all failed closed.
+- Python compilation and `git diff --check` passed.
+- Hosted static checks and CodeQL Actions/Python passed.
+- Immutable manual review of exact head
+  `d9cbb22be847bdb61f54b39bce6dc9f103e96f1a` found no actionable issue.
+
+### Bugs / findings
+
+- P2: memory warnings left a retained detector and timeout alive despite UIKit's
+  request to release temporary memory and restrict active work.
+
+### Review limitations
+
+- Current Xcode compilation is not claimed for this Swift 1-era historical
+  source-review sample.
+- `$codex-review` stopped before analysis with OpenAI HTTP 401 authentication
+  failure. No review finding was suppressed; the exact diff received an
+  immutable manual review.
+
+### Next action
+
+- Re-run exact-head checks after this evidence-only amendment and merge only the
+  fully green reviewed head.
+
 ## 2026-06-26 02:38 PDT - P2 - Reconcile platform and callback roadmap
 
 ### Summary

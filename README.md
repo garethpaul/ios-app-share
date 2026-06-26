@@ -149,6 +149,8 @@ releases the retained detector, suppresses off-screen accessibility announcement
 and leaves late callbacks unable to mutate state.
 The view controller applies the same silent cleanup before its view leaves the
 hierarchy, so detector and timeout ownership do not outlive the visible screen.
+It also applies that cleanup after UIKit delivers a memory warning, releasing
+temporary detector ownership before low-memory pressure can terminate the app.
 Both AppShare target configurations use the repository-relative bridging header
 at `AppShare/Bridge-Header.h`, so checkouts do not depend on a developer home
 directory.
