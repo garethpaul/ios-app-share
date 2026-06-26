@@ -1,5 +1,63 @@
 # Changes
 
+## 2026-06-26 02:38 PDT - P2 - Reconcile platform and callback roadmap
+
+### Summary
+
+Reconciled completed platform-limit and callback-verification roadmap items
+against the maintained README, project metadata, dependency behavior, source
+contracts, and hosted validation boundary.
+
+### Work completed
+
+- Consolidated the iOS 8.3, Swift 1-era, current `canOpenURL:`, and cleartext
+  dependency limitations into one maintained evidence section.
+- Documented the success, failure, construction, stale-result, timeout, and
+  lifecycle callback contracts already enforced by the portable baseline.
+- Retired only the two completed roadmap entries while preserving the separate
+  Swift and dependency modernization priority.
+- Added a fail-closed checker contract and implementation plan for future drift.
+
+### Threads
+
+- Started: none — the evidence audit and documentation change were completed
+  directly to avoid overlapping public work.
+- Continued: none.
+- Stopped: none.
+
+### Files changed
+
+- `README.md` — consolidates historical platform and callback evidence.
+- `VISION.md` — removes completed roadmap items.
+- `scripts/check-baseline.py` — enforces the maintained evidence and roadmap.
+- `docs/plans/2026-06-26-platform-callback-roadmap-reconciliation.md` — records
+  the design, red-first contract, scope, and verification.
+
+### Validation
+
+- Red-first `python3 scripts/check-baseline.py` — rejected the missing evidence,
+  stale roadmap entries, absent change record, and incomplete plan.
+- Eleven isolated hostile documentation mutations — rejected evidence, roadmap,
+  change-history, and plan drift.
+- `python3 scripts/check-baseline.py`, Python compilation, all four Make gates
+  from the checkout and an external working directory, and `git diff --check`
+  — passed; local Xcode was unavailable.
+
+### Bugs / findings
+
+- P2: VISION still described platform documentation and callback checks as
+  future work even though the repository already contained both.
+
+### Blockers
+
+- Current Xcode cannot compile or execute this Swift 1-era dependency graph;
+  runtime behavior still requires a compatible historical toolchain and device.
+
+### Next action
+
+- Validate the exact documentation contract locally and in hosted checks, then
+  merge only the reviewed green head.
+
 ## 2026-06-26 - P1 - Release detection when the view hides
 
 ### Summary

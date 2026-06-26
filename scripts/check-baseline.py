@@ -30,6 +30,7 @@ ALL_PUSH_CHECKS_PLAN = ROOT / "docs/plans/2026-06-17-all-push-checks.md"
 DETECTOR_TIMEOUT_PLAN = ROOT / "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md"
 INACTIVE_DETECTION_PLAN = ROOT / "docs/plans/2026-06-25-release-detection-on-inactive.md"
 HIDDEN_VIEW_DETECTION_PLAN = ROOT / "docs/plans/2026-06-26-release-detection-on-view-hide.md"
+ROADMAP_RECONCILIATION_PLAN = ROOT / "docs/plans/2026-06-26-platform-callback-roadmap-reconciliation.md"
 
 
 def require(condition, message, failures):
@@ -179,6 +180,7 @@ def main():
         "docs/plans/2026-06-18-001-fix-detector-timeout-plan.md",
         "docs/plans/2026-06-25-release-detection-on-inactive.md",
         "docs/plans/2026-06-26-release-detection-on-view-hide.md",
+        "docs/plans/2026-06-26-platform-callback-roadmap-reconciliation.md",
         "docs/readme-overview.svg",
     ]
 
@@ -232,6 +234,7 @@ def main():
     detector_timeout_plan = DETECTOR_TIMEOUT_PLAN.read_text(encoding="utf-8") if DETECTOR_TIMEOUT_PLAN.exists() else ""
     inactive_detection_plan = INACTIVE_DETECTION_PLAN.read_text(encoding="utf-8") if INACTIVE_DETECTION_PLAN.exists() else ""
     hidden_view_detection_plan = HIDDEN_VIEW_DETECTION_PLAN.read_text(encoding="utf-8") if HIDDEN_VIEW_DETECTION_PLAN.exists() else ""
+    roadmap_reconciliation_plan = ROADMAP_RECONCILIATION_PLAN.read_text(encoding="utf-8") if ROADMAP_RECONCILIATION_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     view_did_load = swift_function_body(active_view_controller, "override func viewDidLoad")
     view_will_disappear = swift_function_body(active_view_controller, "override func viewWillDisappear")
@@ -442,6 +445,19 @@ def main():
     require("completion timeout" in readme.lower() and "late callback" in readme.lower(),
             "README must document bounded detector recovery and late-callback rejection",
             failures)
+    normalized_readme = " ".join(readme.split())
+    roadmap_evidence = (
+        "Historical Platform And Callback Evidence",
+        "iOS 8.3 deployment target and Swift 1-era source",
+        "broad `canOpenURL:` probing is not viable on current iOS",
+        "cleartext `http://itunes.apple.com/lookup` request",
+        "success and failure callbacks return to the main queue",
+        "stale and duplicate terminal callbacks",
+        "does not compile the Swift application or execute XCTest",
+    )
+    require(all(item in normalized_readme for item in roadmap_evidence),
+            "README must preserve historical platform and callback verification evidence",
+            failures)
     require("local-only" in readme.lower() and "installed-app" in readme.lower() and "button" in readme.lower() and "main queue" in readme.lower() and "in-progress" in readme.lower() and "completed state" in readme.lower() and "state-specific accessibility" in readme.lower() and "accessibility announcements" in readme.lower() and "detector lifetime" in readme.lower() and "retain cycle" in readme.lower() and "stale callback" in readme.lower(),
             "README must document local-only, user-triggered installed-app detection",
             failures)
@@ -456,6 +472,18 @@ def main():
             failures)
     require("completion timeout" in vision.lower() and "late callback" in vision.lower(),
             "VISION must preserve bounded detector recovery",
+            failures)
+    next_priorities_match = re.search(
+        r"Next priorities:\n\n(?P<body>.*?)(?:\n\nContribution rules:)",
+        vision,
+        re.DOTALL,
+    )
+    next_priorities = next_priorities_match.group("body") if next_priorities_match else ""
+    require(next_priorities_match is not None and
+            "Modernize Swift and dependency usage in a dedicated pass" in next_priorities and
+            "Document iOS version limitations around installed-app detection" not in next_priorities and
+            "Add tests or manual checks around success and failure callbacks" not in next_priorities,
+            "VISION must retire completed platform and callback roadmap items while retaining modernization",
             failures)
     require("installed-app" in security.lower() and "make check" in security and "github actions" in security.lower() and "completed state" in security.lower() and "state-specific accessibility" in security.lower() and "accessibility announcements" in security.lower() and "retain cycle" in security.lower() and "stale callback" in security.lower(),
             "SECURITY must document installed-app privacy and the static baseline",
@@ -480,6 +508,9 @@ def main():
             failures)
     require("completion timeout" in changes.lower() and "late callback" in changes.lower(),
             "CHANGES must record bounded detector recovery",
+            failures)
+    require("Reconciled completed platform-limit and callback-verification roadmap items" in changes,
+            "CHANGES must record platform and callback roadmap reconciliation",
             failures)
     require("status: completed" in baseline_plan and "status: completed" in explicit_detection_plan and "status: completed" in callback_ui_plan,
             "plans must be marked completed",
@@ -585,6 +616,12 @@ def main():
             "cancelDetectionForInactiveApp" in hidden_view_detection_plan and
             "hostile mutations" in hidden_view_detection_plan.lower(),
             "hidden-view detector cleanup plan must record completed lifecycle verification",
+            failures)
+    require("status: completed" in roadmap_reconciliation_plan and
+            "Historical Platform And Callback Evidence" in roadmap_reconciliation_plan and
+            "hostile documentation mutations" in roadmap_reconciliation_plan.lower() and
+            "external working directory" in roadmap_reconciliation_plan,
+            "platform and callback roadmap reconciliation plan must record completed verification",
             failures)
     stale_callback_statuses = re.findall(
         r"^status: .+$", stale_callback_plan, flags=re.MULTILINE

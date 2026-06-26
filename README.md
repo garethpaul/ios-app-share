@@ -75,6 +75,26 @@ Run `pod install` only from a compatible CocoaPods environment when you intentio
   cleartext HTTP. Installed-app results are sensitive device metadata; do not
   use this sample as a privacy-safe implementation.
 
+### Historical Platform And Callback Evidence
+
+The project retains an iOS 8.3 deployment target and Swift 1-era source. Its
+pinned `iHasApp` 2.2.0 dependency predates modern query-scheme restrictions, so
+broad `canOpenURL:` probing is not viable on current iOS. The dependency's
+dictionary path also makes a cleartext `http://itunes.apple.com/lookup` request
+with detected identifiers. These constraints make the repository a historical
+source-review sample, not a supported installed-app inventory technique.
+
+The maintained first-party flow keeps detection user-triggered. Construction
+failure, success and failure callbacks return to the main queue and converge on
+generation-scoped terminal state. Static contracts require stale and duplicate
+terminal callbacks to remain inert, bound abandoned scans with a timeout, and
+release detector ownership when the app or view becomes inactive.
+
+The portable gate checks those source and project contracts. Hosted macOS also
+parses `AppShare.xcodeproj`, but it does not compile the Swift application or
+execute XCTest. Callback behavior therefore still requires a compatible
+historical toolchain and device for runtime confirmation.
+
 ## Testing and Verification
 
 Run the local static baseline:
