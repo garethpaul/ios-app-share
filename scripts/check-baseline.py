@@ -435,11 +435,11 @@ def main():
     require("Pods/" in gitignore and "*.local.xcconfig" in gitignore and ".env" in gitignore,
             ".gitignore must exclude Pods and local secret/config files",
             failures)
-    require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
+    require(".PHONY: __repository-make-authority build check lint test" in makefile and "lint test build:: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
-    require("override makefile_space := __IOS_APP_SHARE_MAKEFILE_SPACE__" in makefile and "$(subst $(space),$(makefile_space),$(MAKEFILE_LIST))" in makefile and "$(subst $(makefile_space),$(space),$(abspath $(dir $(lastword $(encoded_makefile_list)))))" in makefile and '@python3 "$(ROOT)/scripts/check-baseline.py"' in makefile and '@python3 "$(ROOT)/scripts/test-make-spaced-path.py"' in makefile,
-            "Makefile must preserve spaces while deriving and testing the loaded checkout root", failures)
+    require("MAKEFILES must be empty" in makefile and "MAKEFILE_LIST must not be overridden" in makefile and "repository Makefile must be loaded alone" in makefile and ".SECONDEXPANSION:" in makefile and '@python3 "$(ROOT)/scripts/check-baseline.py"' in makefile and '@python3 "$(ROOT)/scripts/test-make-spaced-path.py"' in makefile,
+            "Makefile must preserve spaces and reject ambiguous verification roots", failures)
     require("absolute Makefile path" in readme and "any working directory" in readme and "paths containing spaces" in readme,
             "README must document location-independent verification", failures)
     require("Make verification target derive the checkout root" in changes and "external directories" in changes and "roots containing spaces" in changes,

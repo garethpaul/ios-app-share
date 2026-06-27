@@ -20,7 +20,7 @@ user-triggered, local-only installed-app detection.
 
 - Install dependencies: `pod install`
 - Full baseline: `make check`
-- Make gates support absolute checkout paths containing spaces; preserve the encoded `MAKEFILE_LIST` root derivation and recursive regression.
+- Make gates support absolute checkout paths containing spaces; preserve the single-Makefile authority boundary and recursive regression.
 - Local Apple development: `open AppShare.xcworkspace`
 - If a command above skips because a platform toolchain is missing, verify on a machine with that SDK before claiming platform behavior is tested.
 

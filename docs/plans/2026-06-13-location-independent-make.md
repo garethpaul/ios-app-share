@@ -8,7 +8,7 @@ Absolute Makefile invocations resolve the maintained checker relative to the cal
 
 ## Scope
 
-1. Derive the checkout root from an encoded `MAKEFILE_LIST` that preserves spaces.
+1. Derive the checkout root from the single loaded Makefile path while preserving spaces.
 2. Invoke the Python checker through its rooted path.
 3. Add completed-plan, external-run, recursive spaced-path, guidance, and mutation contracts.
 4. Preserve application, project, pod, bridge, detector, and workflow files.
@@ -22,7 +22,8 @@ Absolute Makefile invocations resolve the maintained checker relative to the cal
 
 ## Work Completed
 
-- Derived the checkout root from the loaded Makefile and invoked the checker through its absolute path.
+- Derived the checkout root from the sole loaded Makefile, rejected ambiguous
+  Makefile inputs, and invoked the checker through its absolute path.
 - Added a recursive-safe full-baseline regression against a copied checkout whose absolute path contains spaces.
 - Added rooted invocation, completed-plan evidence, and synchronized guidance.
 - Preserved application, project, pod, bridge, detector, and workflow files.
@@ -31,6 +32,7 @@ Absolute Makefile invocations resolve the maintained checker relative to the cal
 
 - Root and external-directory Make gates passed for all four aliases.
 - GNU Make 4.2 and 4.4 space-containing absolute Makefile paths passed.
+- Preloaded, overridden, additional, and recipe-replacement Makefiles failed closed.
 - The root-derivation mutation failed.
 - The checker-invocation mutation failed.
 - The plan-status mutation failed.
