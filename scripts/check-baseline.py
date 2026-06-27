@@ -152,6 +152,7 @@ def main():
         "README.md",
         "SECURITY.md",
         "VISION.md",
+        "scripts/test-make-spaced-path.py",
         "AppShare.xcworkspace/contents.xcworkspacedata",
         "AppShare.xcodeproj/project.pbxproj",
         "AppShare/Info.plist",
@@ -437,11 +438,11 @@ def main():
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
-    require("override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile and '@python3 "$(ROOT)/scripts/check-baseline.py"' in makefile,
-            "Makefile must invoke the checker through the loaded checkout root", failures)
-    require("absolute Makefile path" in readme and "any working directory" in readme,
+    require("override makefile_space := __IOS_APP_SHARE_MAKEFILE_SPACE__" in makefile and "$(subst $(space),$(makefile_space),$(MAKEFILE_LIST))" in makefile and "$(subst $(makefile_space),$(space),$(abspath $(dir $(lastword $(encoded_makefile_list)))))" in makefile and '@python3 "$(ROOT)/scripts/check-baseline.py"' in makefile and '@python3 "$(ROOT)/scripts/test-make-spaced-path.py"' in makefile,
+            "Makefile must preserve spaces while deriving and testing the loaded checkout root", failures)
+    require("absolute Makefile path" in readme and "any working directory" in readme and "paths containing spaces" in readme,
             "README must document location-independent verification", failures)
-    require("Make verification target derive the checkout root" in changes and "external directories" in changes,
+    require("Make verification target derive the checkout root" in changes and "external directories" in changes and "roots containing spaces" in changes,
             "CHANGES must record location-independent verification", failures)
     require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "GitHub Actions" in readme and "AppShare.xcworkspace" in readme and "iHasApp" in readme,
             "README must document static verification, workspace usage, and iHasApp",
@@ -590,7 +591,7 @@ def main():
     location_statuses = re.findall(r"^status: .+$", location_independent_make_plan, flags=re.MULTILINE)
     location_sections = location_independent_make_plan.split("## Verification Completed\n", 1)
     location_verification = location_sections[1] if len(location_sections) == 2 else ""
-    location_required = ("Root and external-directory Make gates passed", "root-derivation mutation failed", "checker-invocation mutation failed", "plan-status mutation failed", "plan-evidence mutation failed", "documentation mutation failed")
+    location_required = ("Root and external-directory Make gates passed", "space-containing absolute Makefile paths passed", "root-derivation mutation failed", "checker-invocation mutation failed", "plan-status mutation failed", "plan-evidence mutation failed", "documentation mutation failed")
     require(location_statuses == ["status: completed"] and all(item in location_verification for item in location_required) and re.search(r"\b(?:pending|todo|tbd|not run)\b", location_verification, re.IGNORECASE) is None,
             "location-independent Make plan must record completed verification", failures)
     all_push_statuses = re.findall(r"^status: .+$", all_push_checks_plan, flags=re.MULTILINE)

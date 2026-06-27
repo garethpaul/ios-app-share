@@ -1,5 +1,7 @@
 # Changes
 
+- Preserved absolute Makefile roots containing spaces and added a recursive-safe full-baseline regression.
+
 ## 2026-06-26 14:43 PDT - P2 - Release detection on memory warning
 
 ### Summary
